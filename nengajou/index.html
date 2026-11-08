@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年賀状じまいの文例・あいさつ文を無料で作成｜取引先・お客さま・友人向け</title>
+<meta name="description" content="相手と理由を選ぶだけで、年賀状じまい（年賀状をやめるあいさつ）の文例ができます。無料・登録なし、入れた内容はどこにも送られません。喪中はがきには使えません。">
+<style>
+:root{--bg:#fbf8f3;--card:#fff;--ink:#2f2f2f;--sub:#6b6b6b;--line:#e6e0d6;--accent:#c0563b;--ok:#2e7d32;--warn:#b26a00}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;line-height:1.7}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.45rem;margin:.2em 0}
+h2{font-size:1.1rem;margin:0 0 .6em}
+h3{font-size:1rem;margin:1em 0 .2em}
+.lead{color:var(--sub);margin:.2em 0 1.2em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 16px}
+label{display:block;font-weight:bold;margin:.8em 0 .2em}
+.hint{font-weight:normal;color:var(--sub);font-size:.88rem}
+input,select{width:100%;font:inherit;padding:10px;border:1px solid #cfc7ba;border-radius:8px;background:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>div{flex:1 1 200px;min-width:0}
+@media (max-width:520px){.row>div{flex-basis:100%}}
+button{font:inherit;border:0;border-radius:8px;padding:10px 16px;background:var(--accent);color:#fff;cursor:pointer}
+button.sub{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.out{white-space:pre-wrap;overflow-wrap:anywhere;background:#fffdf9;border:1px dashed #d9cfbf;border-radius:8px;padding:12px;margin:.4em 0}
+.err{color:var(--accent);font-weight:bold}
+.okc{color:var(--ok)}
+.note{font-size:.9rem;color:var(--sub)}
+.safe{background:#eef6ee;border-radius:10px;padding:10px 12px;font-size:.92rem}
+ul.tips{padding-left:1.2em;margin:.3em 0}
+footer{font-size:.9rem;color:var(--sub);margin-top:24px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>年賀状じまいのあいさつ文作成</h1>
+<p class="lead">「年賀状は今年で最後にします」というあいさつ（年賀状じまい）の文を、<b>相手と理由を選ぶだけ</b>で作ります。印刷用の全文と、市販の年賀状に手書きで添える短い文（どちらか一方を使います）ができます。<br><span class="hint">※喪中のお知らせには使えません。</span></p>
+<p class="safe">🔒 入れた内容は、このページの中だけで使います。どこにも送らず、保存もしません。</p>
+
+<section class="card">
+<h2>1. 相手と理由を選ぶ</h2>
+<div class="row">
+<div><label for="to">だれに送るか</label>
+<select id="to">
+<option value="biz">取引先（会社・お店として）</option>
+<option value="cust">お客さま（お店・教室として）</option>
+<option value="friend" selected>知人・友人・親せき（個人として）</option>
+</select></div>
+<div><label for="reason">やめる理由</label>
+<select id="reason"></select></div>
+</div>
+<div class="row">
+<div><label for="contact">これからの連絡</label>
+<select id="contact">
+<option value="yes">メールや SNS などで続けたい、と書く</option>
+<option value="no">特に書かない</option>
+</select></div>
+<div><label for="year">いつの年賀状か</label>
+<select id="year"></select></div>
+</div>
+<label for="from">差出人 <span class="hint">（任意・空なら書きません）</span></label>
+<input type="text" id="from" maxlength="40" placeholder="例：山田 花子／○○商店 店主 山田">
+<p><button id="make">あいさつ文を作る</button></p>
+<p id="formerr" class="err" role="alert"></p>
+</section>
+
+<section class="card" id="results" hidden>
+<h2>2. できあがった文</h2>
+<p class="note">一般的な例です。言い方の好みや地域のならわしは、人によって違います。<b>最後は必ずご自身で読んで、相手に合っているか確かめてください。</b><br>改まった相手には、「。」「、」を付けずに一字空けて書く方法もあります。</p>
+<h3>はがきに書く全文</h3><div class="out" id="o1"></div><button class="sub" data-copy="o1">写す</button>
+<h3>市販の年賀状に手書きで添えるひとこと（全文を使わない場合）</h3><div class="out" id="o2"></div><button class="sub" data-copy="o2">写す</button>
+<p id="copied" class="okc" aria-live="polite"></p>
+</section>
+
+<section class="card">
+<h2>出す前に知っておきたいこと（2027年用・2026年末に出す分）</h2>
+<ul class="tips">
+<li>2027年用の年賀状は、<b>2026年12月20日（日）から</b>年賀状として受け付けられます（これまでの12月15日から変わりました）。それより前にポストに入れると、ふつうの郵便として年内に届きます（年賀状として扱われません）。</li>
+<li>元日に届けたいときは、<b>12月27日（日）まで</b>に出すのが目安です。</li>
+<li>日付は、日本郵便の郵便局のプリントサービスのページ（2026年9月掲載）にもとづきます。変わることがあるので、<a href="https://print.shop.post.japanpost.jp/feature-nenga/article59" target="_blank" rel="noopener">こちら</a>や日本郵便の発表でも確かめてください。</li>
+<li>年賀状じまいは、急にやめるより「今年で最後にします」と年賀状の中で伝えると、相手に伝わりやすくなります。</li>
+</ul>
+</section>
+
+<footer>
+<p>このページの文は一般的な例です。お使いになったことで起きた損害には、責任を負いかねます。</p>
+<p>お知らせ・あいさつ文・商品説明の文章を、読みやすく整えるお仕事も受けています（AI で下書きし、私が全文を読んで確かめてから納品します）。<br>
+→ <a href="https://coconala.com/services/4492227" target="_blank" rel="noopener">ココナラ「お知らせ・商品説明の文章を読みやすく整えます」</a></p>
+<p>ほかの道具：<a href="../">年末年始のお休みのお知らせ作成（曜日チェックつき）</a></p>
+<p>作った人：なお（<a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener">note</a>）</p>
+</footer>
+</main>
+<script>
+/*LOGIC-START*/
+const REASONS={
+  biz:[['mail','連絡がメールなどに移ってきたため'],['eco','紙を減らす取り組みとして'],['none','理由は書かない']],
+  cust:[['mail','連絡がメールや SNS に移ってきたため'],['eco','紙を減らす取り組みとして'],['none','理由は書かない']],
+  friend:[['age','年齢を重ねて、準備が負担になってきたため'],['retire','定年退職を機に'],['mail','やり取りがメールや SNS 中心になったため'],['none','理由は書かない']]
+};
+const KANJI=['〇','一','二','三','四','五','六','七','八','九'];
+function reiwa(y){const n=y-2018;if(n<1||n>99)return null;const t=Math.floor(n/10),o=n%10;return (t?(t>1?KANJI[t]:'')+'十':'')+(o?KANJI[o]:'');}
+function makeJimai(o){
+  const to=o.to, list=REASONS[to];
+  if(!list) return {error:'だれに送るかを選んでください。'};
+  if(!list.some(r=>r[0]===o.reason)) return {error:'やめる理由を選んでください。'};
+  const y=+o.year; const rw=reiwa(y);
+  if(!rw) return {error:'年を確かめてください。'};
+  const from=(o.from||'').replace(/[\r\n]+/g,' ').trim();
+  const L=[];
+  const yes=o.contact==='yes';
+  if(to==='friend'){
+    L.push('あけましておめでとうございます');
+    L.push('昨年も大変お世話になり、ありがとうございました。');
+    const rs={age:'年齢を重ねて、年賀状の準備が少しずつ負担になってきたため、',retire:'このたび定年退職を迎えたのを機に、',mail:'ふだんのやり取りがメールや SNS 中心になってきたこともあり、',none:''}[o.reason];
+    L.push(rs+'勝手ながら、今年をもちまして年賀状でのごあいさつを最後にさせていただくことにしました。');
+    L.push(yes?(o.reason==='mail'?'これからも変わらずお付き合いいただけたらうれしいです。':'これからも、メールや SNS などで変わらずお付き合いいただけたらうれしいです。'):'これからも変わらず、どうぞよろしくお願いいたします。');
+    L.push('みなさまにとって、よい一年になりますように。');
+  }else{
+    L.push(to==='biz'?'謹んで新春のお慶びを申し上げます':'謹んで新年のお慶びを申し上げます');
+    L.push(to==='biz'?'旧年中は格別のお引き立てを賜り、厚く御礼申し上げます。':'旧年中はひとかたならぬご愛顧をいただき、心より御礼申し上げます。');
+    const rs={mail:(to==='biz'?'近年はメールなどでのご連絡が増えてまいりましたことから、':'近年はメールや SNS でのご連絡が増えてまいりましたことから、'),eco:'紙の使用を減らす取り組みの一つとして、',none:''}[o.reason];
+    L.push(rs+'誠に勝手ながら、本年をもちまして年始のごあいさつ状を控えさせていただくことにいたしました。');
+    if(yes){
+      L.push('何とぞご理解くださいますよう、お願い申し上げます。');
+      L.push(o.reason==='mail'?'今後とも変わらぬお付き合いをいただけますと幸いです。':(to==='biz'?'今後とも、メールなどで変わらぬお付き合いをいただけますと幸いです。':'今後とも、メールや SNS などで変わらずお付き合いいただけますと幸いです。'));
+    }else{
+      L.push('何とぞご理解を賜りますとともに、今後とも変わらぬお付き合いのほど、よろしくお願い申し上げます。');
+    }
+    L.push(to==='biz'?'皆様のますますのご発展を心よりお祈り申し上げます。':'皆様のご健康とご多幸をお祈り申し上げます。');
+  }
+  const tail=['','令和'+rw+'年　元旦'];
+  if(from) tail.push(from);
+  const t1=[L[0],''].concat(L.slice(1)).concat(tail).join('\n');
+  let t2;
+  if(to==='friend') t2='年賀状は今年で最後にします。'+(yes?'これからもメールや SNS で、どうぞよろしくお願いします。':'これからもよろしくお願いします。');
+  else t2='誠に勝手ながら、年始のごあいさつ状は本年をもちまして控えさせていただきます。'+(yes?(to==='biz'?'今後はメールなどでのごあいさつとさせていただきます。':'今後はメールや SNS などでのごあいさつとさせていただきます。'):'今後ともよろしくお願い申し上げます。');
+  return {t1,t2};
+}
+/*LOGIC-END*/
+if(typeof document!=='undefined'){
+  const $=id=>document.getElementById(id);
+  const now=new Date(); const baseY=now.getMonth()>=6?now.getFullYear()+1:now.getFullYear();
+  for(let y=baseY;y<=baseY;y++){const op=document.createElement('option');op.value=y;op.textContent=y+'年（令和'+reiwa(y)+'年）の年賀状';$('year').appendChild(op);}
+  function fillReasons(){const s=$('reason');s.textContent='';REASONS[$('to').value].forEach(r=>{const op=document.createElement('option');op.value=r[0];op.textContent=r[1];s.appendChild(op);});}
+  fillReasons(); $('to').onchange=()=>{fillReasons();$('results').hidden=true;};
+  ['reason','contact','year','from'].forEach(id=>{$(id).addEventListener('change',()=>{$('results').hidden=true;});$(id).addEventListener('input',()=>{$('results').hidden=true;});});
+  $('make').onclick=()=>{
+    const r=makeJimai({to:$('to').value,reason:$('reason').value,contact:$('contact').value,year:$('year').value,from:$('from').value});
+    $('formerr').textContent=r.error||'';
+    if(r.error){$('results').hidden=true;return;}
+    $('o1').textContent=r.t1;$('o2').textContent=r.t2;$('results').hidden=false;$('copied').textContent='';
+  };
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{
+    const t=$(b.dataset.copy).textContent;
+    try{await navigator.clipboard.writeText(t);$('copied').textContent='写しました。貼り付けて使えます。';return;}catch(e){}
+    let ok=false;
+    try{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();ok=document.execCommand('copy');ta.remove();}catch(e){ok=false;}
+    $('copied').textContent=ok?'写しました。':'うまく写せませんでした。文をなぞって選んで写してください。';
+  });
+}
+</script>
+</body>
+</html>
