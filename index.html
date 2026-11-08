@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年末年始のお休みのお知らせ作成（曜日チェックつき）</title>
+<meta name="description" content="お休みの日と再開の日を選ぶだけで、曜日の合った年末年始のお知らせ文ができます。入れた内容はどこにも送られません。">
+<style>
+:root{--bg:#fbf8f3;--card:#fff;--ink:#2f2f2f;--sub:#6b6b6b;--line:#e6e0d6;--accent:#c0563b;--ok:#2e7d32;--warn:#b26a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;line-height:1.7}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.45rem;margin:.2em 0}
+h2{font-size:1.1rem;margin:0 0 .6em}
+.lead{color:var(--sub);margin:.2em 0 1.2em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 16px}
+label{display:block;font-weight:bold;margin:.8em 0 .2em}
+.hint{font-weight:normal;color:var(--sub);font-size:.88rem}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid #cfc7ba;border-radius:8px;background:#fff}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>div{flex:1 1 200px;min-width:0}
+@media (max-width:520px){.row>div{flex-basis:100%}}
+html,body{overflow-x:hidden}
+button{font:inherit;border:0;border-radius:8px;padding:10px 16px;background:var(--accent);color:#fff;cursor:pointer}
+button.sub{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.out{white-space:pre-wrap;background:#fffdf9;border:1px dashed #d9cfbf;border-radius:8px;padding:12px;margin:.4em 0}
+.err{color:var(--accent);font-weight:bold}
+.okc{color:var(--ok)}
+.warnc{color:var(--warn)}
+ul.res{padding-left:1.2em}
+.note{font-size:.9rem;color:var(--sub)}
+.safe{background:#eef6ee;border-radius:10px;padding:10px 12px;font-size:.92rem}
+footer{font-size:.9rem;color:var(--sub);margin-top:24px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>年末年始のお休みのお知らせ作成</h1>
+<p class="lead">お休みの日と再開の日を選ぶだけで、<b>曜日の合った</b>お知らせ文ができます。貼り紙用・SNS 用・ひとこと用の3つを作ります。</p>
+<p class="safe">🔒 入れた内容は、このページの中だけで使います。どこにも送らず、保存もしません。</p>
+
+
+<section class="card">
+<h2>1. お休みの日を選ぶ</h2>
+<div class="row">
+<div><label for="kind">お店か、教室か</label>
+<select id="kind"><option value="shop">お店</option><option value="class">教室・スクール</option></select></div>
+<div><label for="shop">呼び方 <span class="hint">（空なら「当店」「当教室」）</span></label><input type="text" id="shop" maxlength="30" placeholder="例：当店／当サロン"></div>
+</div>
+<div class="row">
+<div><label for="start">お休みの最初の日</label><input type="date" id="start"></div>
+<div><label for="end">お休みの最後の日</label><input type="date" id="end"></div>
+</div>
+<div class="row">
+<div><label for="reopen">再開の日 <span class="hint">（空なら、お休みの次の日）</span></label><input type="date" id="reopen"></div>
+<div><label for="lastday">お休み前の最後の日 <span class="hint">（任意）</span></label>
+<select id="lastday"><option value="">いつもどおり</option><option value="short">早めに終わる</option></select></div>
+</div>
+<div class="row">
+<div><label for="lastend">終わる時間 <span class="hint">（早めに終わるとき）</span></label><input type="time" id="lastend" value="15:00"></div>
+<div></div>
+</div>
+<label for="extra">ひとこと <span class="hint">（任意・予約や問い合わせのことなど）</span></label>
+<input type="text" id="extra" maxlength="60" placeholder="例：お休み中のご予約は、再開後に順番にお返事します">
+<p><button id="make">お知らせ文を作る</button></p>
+<p id="formerr" class="err" role="alert"></p>
+<p id="formwarn" class="warnc" role="status"></p>
+</section>
+
+<section class="card" id="results" hidden>
+<h2>2. できあがった文</h2>
+<p class="note">そのまま使えるように作っていますが、<b>最後は必ずご自身で読んで、日付と曜日を確かめてください。</b></p>
+<h3>貼り紙用</h3><div class="out" id="o1"></div><button class="sub" data-copy="o1">写す</button>
+<h3>SNS 用</h3><div class="out" id="o2"></div><button class="sub" data-copy="o2">写す</button>
+<h3>ひとこと用</h3><div class="out" id="o3"></div><button class="sub" data-copy="o3">写す</button>
+<p id="copied" class="okc" aria-live="polite"></p>
+</section>
+
+<section class="card">
+<h2>3. 自分で書いた文の曜日を確かめる</h2>
+<p class="note">「12月29日（火）」「12/29(火)」「1月1日（金・祝）」のように、日付のすぐ後ろに曜日が書いてある所を確かめます。年が書いていない日付は、下で選んだ年として数えます（1月〜3月は次の年）。</p>
+<label for="year">いつの年末年始か</label>
+<select id="year"></select>
+<label for="text">文を貼ってください</label>
+<textarea id="text" rows="6" placeholder="例：年末年始は12月29日（火）から1月3日（日）までお休みです。"></textarea>
+<p><button id="check">曜日を確かめる</button></p>
+<div id="checkout" aria-live="polite"></div>
+</section>
+
+<footer>
+<p>このページは、日付と曜日の見落としを減らすお手伝いです。間違いが必ず見つかるわけではありません。祝日には対応していません。お使いになったことで起きた損害には、責任を負いかねます。</p>
+<p>お知らせ・商品説明の文章を、読みやすく整えるお仕事も受けています（AI で下書きし、私が全文を読んで確かめてから納品します）。<br>
+→ <a href="https://coconala.com/services/4492227" target="_blank" rel="noopener">ココナラ「お知らせ・商品説明の文章を読みやすく整えます」</a></p>
+<p>作った人：なお（<a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener">note</a>）</p>
+</footer>
+</main>
+<script>
+/*LOGIC-START*/
+const WD = ['日','月','火','水','木','金','土'];
+function parseYMD(s){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); if(!m) return null;
+  const d=new Date(+m[1],+m[2]-1,+m[3]); return (d.getMonth()===+m[2]-1)?d:null;
+}
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+function fmt(d){return (d.getMonth()+1)+'月'+d.getDate()+'日（'+WD[d.getDay()]+'）';}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+function diffDays(a,b){return Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000);}
+function makeNotices(o,today){
+  const s=parseYMD(o.start), e=parseYMD(o.end);
+  if(!s||!e) return {error:'お休みの最初の日と最後の日を選んでください。'};
+  if(diffDays(s,e)<0) return {error:'お休みの最後の日が、最初の日より前になっています。'};
+  if(diffDays(s,e)>30) return {error:'お休みが31日をこえています。日付を確かめてください。'};
+  const r=o.reopen?parseYMD(o.reopen):addDays(e,1);
+  if(!r) return {error:'再開の日を確かめてください。'};
+  if(diffDays(e,r)<1) return {error:'再開の日が、お休みの最後の日より前（または同じ日）になっています。'};
+  if(diffDays(e,r)>31) return {error:'再開の日が、お休みの最後の日から1か月以上あとになっています。年を確かめてください。'};
+  const isClass=o.kind==='class';
+  const name=(o.shop||'').trim()||(isClass?'当教室':'当店');
+  const work=isClass?'レッスン':'営業';
+  const last=addDays(s,-1);
+  let lastLine='';
+  if(o.lastday==='short'){
+    const m=/^(\d{1,2}):(\d{2})$/.exec(o.lastend||'');
+    if(!m) return {error:'早めに終わる時間を入れてください。'};
+    const h=+m[1], mi=+m[2];
+    if(h<6) return {error:'終わる時間が早すぎます（'+h+'時）。時間を確かめてください。'};
+    lastLine=fmt(last)+'は、'+h+'時'+(mi?mi+'分':'')+'までの'+work+'です';
+  }
+  const range=sameDay(s,e)?fmt(s):fmt(s)+'〜'+fmt(e);
+  const yearEnd=s.getMonth()===11||s.getMonth()===0||e.getMonth()===0;
+  const title=yearEnd?'年末年始のお休みのお知らせ':'お休みのお知らせ';
+  const extra=(o.extra||'').trim();
+  const gapDays=diffDays(e,r)-1;
+  const gapLine=gapDays>0?(gapDays===1?fmt(addDays(e,1)):fmt(addDays(e,1))+'〜'+fmt(addDays(r,-1)))+'もお休みです':'';
+  const reopenLine=fmt(r)+'から、通常どおり'+work+(isClass?'を行います':'します');
+  const t1=[title,'','いつもありがとうございます。',name+'は、下記の日程でお休みをいただきます。','',
+    '・お休み：'+range, gapLine?'・'+gapLine:null, lastLine?'・'+lastLine:null, '・'+reopenLine,
+    extra?'':null, extra||null,'','ご不便をおかけしますが、よろしくお願いいたします。'].filter(x=>x!==null).join('\n');
+  const t2=['【'+title+'】','', range+'はお休みです。', gapLine?gapLine+'。':null, lastLine?lastLine+'。':null,
+    reopenLine+'。', extra||null,'','どうぞよろしくお願いします。'].filter(x=>x!==null).join('\n');
+  const t3=range+(gapLine?'と、'+(gapDays===1?fmt(addDays(e,1)):fmt(addDays(e,1))+'〜'+fmt(addDays(r,-1))):'')+'はお休みです。'+fmt(r)+'から'+work+(isClass?'を再開します。':'します。');
+  let warn='';
+  if(today && diffDays(today,e)<0) warn='お休みの日が、もう過ぎた日になっています。年を確かめてください。';
+  return {t1,t2,t3,warn};
+}
+function checkText(text,baseYear){
+  const norm=String(text||'')
+    .replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/／/g,'/');
+  // 年（任意）＋月日＋かっこ。かっこの中は後で読む
+  const re=/(?:(\d{4})\s*(?:年|\/)\s*)?(\d{1,2})\s*(?:月|\/)\s*(\d{1,2})\s*日?\s*[（(]([^()（）]{1,10})[)）]/g;
+  const out=[]; let m;
+  while((m=re.exec(norm))){
+    const inner=m[4].replace(/\s/g,'');
+    // 「金・祝」「木曜日」「土日」などを読む
+    const head=/^([日月火水木金土])(?:曜日?|曜)?(?:[・･、,\/]?(?:祝日?|休日?|祭日?|振休|振替休日))?$/.exec(inner);
+    if(!head){
+      if(/[日月火水木金土]/.test(inner)) out.push({text:m[0],status:'skip',msg:'曜日の書き方が読めませんでした。ご自身で確かめてください'});
+      continue;
+    }
+    const mo=+m[2], da=+m[3];
+    if(mo<1||mo>12||da<1||da>31){out.push({text:m[0],status:'skip',msg:'日付として読めませんでした。ご自身で確かめてください'});continue;}
+    const y=m[1]?+m[1]:(mo<=3?baseYear+1:baseYear);
+    const d=new Date(y,mo-1,da);
+    if(d.getMonth()!==mo-1){out.push({text:m[0],status:'bad',msg:y+'年には'+mo+'月'+da+'日がありません。日付を確かめてください'});continue;}
+    const right=WD[d.getDay()];
+    if(right===head[1]) out.push({text:m[0],status:'ok',msg:y+'年として、曜日は合っています'});
+    else out.push({text:m[0],status:'bad',msg:y+'年として数えると「'+right+'」です。確かめてください'});
+  }
+  return out;
+}
+/*LOGIC-END*/
+if(typeof document!=='undefined'){
+  const $=id=>document.getElementById(id);
+  const now=new Date(); const baseY=now.getMonth()<=2?now.getFullYear()-1:now.getFullYear();
+  const ys=$('year');
+  for(let y=baseY-1;y<=baseY+2;y++){const o=document.createElement('option');o.value=y;o.textContent=y+'年の年末〜'+(y+1)+'年の年始';if(y===baseY)o.selected=true;ys.appendChild(o);}
+  $('start').value=baseY+'-12-29'; $('end').value=(baseY+1)+'-01-03';
+  $('make').onclick=()=>{
+    const r=makeNotices({kind:$('kind').value,start:$('start').value,end:$('end').value,reopen:$('reopen').value,shop:$('shop').value,lastday:$('lastday').value,lastend:$('lastend').value,extra:$('extra').value},new Date());
+    $('formerr').textContent=r.error||''; $('formwarn').textContent=r.warn||'';
+    if(r.error){$('results').hidden=true;return;}
+    const sy=parseYMD($('start').value); if(sy){const yy=sy.getMonth()<=2?sy.getFullYear()-1:sy.getFullYear(); if([...ys.options].some(o=>+o.value===yy)) ys.value=yy;}
+    $('o1').textContent=r.t1;$('o2').textContent=r.t2;$('o3').textContent=r.t3;$('results').hidden=false;$('copied').textContent='';
+  };
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{
+    const t=$(b.dataset.copy).textContent;
+    try{await navigator.clipboard.writeText(t);$('copied').textContent='写しました。貼り付けて使えます。';return;}catch(e){}
+    let ok=false;
+    try{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();ok=document.execCommand('copy');ta.remove();}catch(e){ok=false;}
+    $('copied').textContent=ok?'写しました。':'うまく写せませんでした。文を長押し（またはなぞって選んで）写してください。';
+  });
+  $('check').onclick=()=>{
+    const res=checkText($('text').value,+$('year').value);
+    const box=$('checkout'); box.textContent='';
+    if(!res.length){box.textContent='「12月29日（火）」のような、日付と曜日が並んだ所が見つかりませんでした。';return;}
+    const bad=res.filter(r=>r.status==='bad').length, skip=res.filter(r=>r.status==='skip').length;
+    const p=document.createElement('p');
+    if(bad){p.className='err';p.textContent='確かめてほしい所が '+bad+' か所あります。'+(skip?'ほかに、読めなかった所が '+skip+' か所あります。':'');}
+    else if(skip){p.className='warnc';p.textContent='間違いは見つかりませんでしたが、読めなかった所が '+skip+' か所あります。そこはご自身で確かめてください。';}
+    else{p.className='okc';p.textContent='見つけた日付の曜日は、すべて合っていました。';}
+    box.appendChild(p);
+    const ul=document.createElement('ul');ul.className='res';
+    res.forEach(r=>{const li=document.createElement('li');li.className=r.status==='ok'?'okc':(r.status==='bad'?'err':'warnc');li.textContent=r.text+' … '+r.msg;ul.appendChild(li);});
+    box.appendChild(ul);
+    const n=document.createElement('p');n.className='note';n.textContent='祝日が合っているかは見ていません。最後はご自身で確かめてください。';box.appendChild(n);
+  };
+}
+</script>
+</body>
+</html>
