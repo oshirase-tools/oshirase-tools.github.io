@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全角半角・半角カナを一括変換｜Excelの表の表記ゆれをそろえる無料ツール</title>
+<meta name="description" content="Excel やスプレッドシートの表を貼ると、全角・半角の英数字、半角カナ、前後の空白、「株式会社／(株)」の書き方をそろえます。直したマスは黄色で表示。貼った表はどこにも送りません。無料・登録なし。">
+<link rel="stylesheet" href="hyoki.css">
+</head>
+<body>
+<main>
+<h1>表の全角半角・半角カナ・(株)をそろえる</h1>
+<p class="lead">Excel やスプレッドシートの表を貼ると、全角・半角や空白のゆれをそろえ、直したマスを黄色で見せます。<br>
+<strong>貼った表は、この端末の中だけで直します。どこにも送らず、保存もしません。</strong></p>
+
+<section class="card">
+<h2>1. 表を貼る</h2>
+<p class="note">Excel やスプレッドシートで範囲を選んでコピーし、下の枠に貼ってください（500行まで）。</p>
+<textarea id="src" rows="8" spellcheck="false" placeholder="例：&#10;会社名	担当	電話&#10;ﾐﾎﾝ商事（株）	山田 太郎	０３－１２３４－５６７８"></textarea>
+<p><button type="button" id="sample" class="sub">見本の表を入れてみる（作り話のデータ）</button></p>
+</section>
+
+<section class="card">
+<h2>2. 直し方を選ぶ</h2>
+<label class="chk"><input type="checkbox" id="o-ascii" checked> 全角の英数字を半角にする（例：０３－１２３４ → 03-1234、ＡＢＣ → ABC、２０２６／１１／１４ → 2026/11/14。文の中の「，」「：」も半角になります）</label>
+<label class="chk"><input type="checkbox" id="o-kana" checked> 半角カナを全角にする（例：ﾔﾏﾀﾞ → ヤマダ）</label>
+<label class="chk"><input type="checkbox" id="o-trim" checked> マスの前後の空白を消す（「山田 太郎」の間の空白は残します）</label>
+<label class="chk"><input type="checkbox" id="o-symbol"> そのほかの全角の記号も半角にする（かっこ（）・！・？・＆など。「～」は変えません）</label>
+<label class="chk"><input type="checkbox" id="o-header" checked> 1行目は見出しなので変えない</label>
+<label for="o-corp">会社の書き方</label>
+<select id="o-corp">
+<option value="">そのまま（変えない）</option>
+<option value="long">「株式会社」にそろえる（(株)・（株）・㈱ → 株式会社）</option>
+<option value="short">「(株)」にそろえる（株式会社 → (株)）</option>
+</select>
+<label class="chk"><input type="checkbox" id="o-corp-other"> 有限会社・合同会社も同じようにそろえる（「（有）」「（同）」を「あり」「同上」の意味で使っている表では外してください）</label>
+<p><button type="button" id="run">そろえる</button></p>
+</section>
+
+<section class="card" id="result" hidden>
+<h2>3. 結果を確かめる</h2>
+<p id="summary"></p>
+<ul id="warns" class="warn"></ul>
+<label class="chk"><input type="checkbox" id="o-before" checked> 黄色のマスに、直す前の値も小さく出す</label>
+<div class="tablewrap"><table id="tbl"></table></div>
+<p class="btns"><button type="button" id="copy">直した表をコピー</button> <button type="button" id="reset" class="sub">直す前に戻す</button></p>
+<p id="copied" class="okc" hidden>コピーしました。Excel やスプレッドシートに貼り付けられます。</p>
+<p id="copyfail" class="warn" hidden>コピーできませんでした。上の「直す前の値も小さく出す」を外してから、表をなぞって選び、手でコピーしてください。</p>
+<p class="note"><strong>直した結果は、使う前に目で確かめてください。</strong>このツールは数字や日付の値を変えませんが、半角にした数字は、Excel に貼ると数字や日付として読まれることがあります（0が消える、1-2 が1月2日になる など）。気になる列は、貼る前にその列を「文字列」にしておくと安心です。コピーした表は、端末のクリップボードに残ります。</p>
+<p class="note">大きな表をまとめて直したい・関数や並べ替えまで整えたいときの方法は、<a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener">note の記事</a>に書いています。</p>
+</section>
+
+<section class="card">
+<h2>このツールがしないこと</h2>
+<ul>
+<li>同じ行を消すこと（同じ行があるときは、知らせるだけです）</li>
+<li>言葉の言いかえ（「お問い合わせ／お問合せ」など）や、大文字・小文字をそろえること</li>
+<li>名前の間の空白を消すこと</li>
+<li>表をどこかへ送ること・保存すること</li>
+</ul>
+</section>
+
+<footer>
+<p>作った人：なお（<a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener">note</a>）</p>
+<p>ほかの道具：<a href="/">年末年始のお休みのお知らせ作成</a>・<a href="/nengajou/">年賀状じまいの文例作成</a></p>
+</footer>
+</main>
+<script src="hyoki.js"></script>
+<script src="hyoki-ui.js"></script>
+</body>
+</html>
