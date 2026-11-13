@@ -1,0 +1,73 @@
+:root{--bg:#fbf8f3;--card:#fff;--ink:#2f2f2f;--sub:#6b6b6b;--line:#e6e0d6;--accent:#2f6f8f;--ok:#2e7d32;--warn:#b26a00;--err:#c62828;--red:#E60012}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:14px;line-height:1.6}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:8px;padding:6px 14px;min-height:36px;background:var(--accent);color:#fff;cursor:pointer}
+button.sub{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #f0a020;outline-offset:1px}
+input[type=text],select,textarea{border:1px solid #cfc7ba;border-radius:8px;padding:6px 8px;background:#fff}
+kbd{border:1px solid #bbb;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;font-size:.9em}
+h1{font-size:1.25rem;margin:0 12px 0 0}
+h2{font-size:1rem;margin:0 0 .5em}
+.note{color:var(--sub);font-size:.9rem}
+.cnt{color:var(--sub);font-size:.85rem;margin-left:4px}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.bar #title{width:22em}
+.bar #print{margin-left:auto}
+.inl{margin-left:8px}
+.warnbar{margin:0;padding:6px 16px;background:#fff3cd;color:#6b4e00}
+.msgbar{margin:0;padding:0 16px;min-height:1.6em;color:var(--ok)}
+.msgbar.warn{color:var(--warn)}
+.msgbar.err{color:var(--err)}
+.work{display:grid;grid-template-columns:200px minmax(0,1fr) 260px;gap:12px;padding:8px 16px}
+.steps,.side,.center{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.steps ol{list-style:none;margin:0 0 8px;padding:0;max-height:62vh;overflow:auto}
+.steps li{border:2px solid transparent;border-radius:8px;padding:4px;margin-bottom:6px;background:#faf9f6}
+.steps li.cur{border-color:var(--accent);background:#eef5f8}
+.steps li .thumb{display:block;width:100%;height:auto;border:1px solid var(--line);cursor:pointer;background:#fff}
+.steps li .row{display:flex;align-items:center;gap:4px;margin-top:4px}
+.steps li .row b{flex:1}
+.steps li .row button{min-height:28px;padding:0 8px}
+.tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tool{background:#fff;color:var(--ink);border:1px solid #cfc7ba}
+.tool[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gap{flex:1}
+.stage{border:2px dashed #cfc7ba;border-radius:10px;min-height:420px;display:flex;align-items:center;justify-content:center;background:#f6f4ef;position:relative}
+.stage.over{border-color:var(--accent);background:#eef5f8}
+.stage.has{border-style:solid;align-items:flex-start}
+.drop{text-align:center;padding:24px}
+.drop .big{font-size:1.2rem;font-weight:bold}
+#cv[hidden]{display:none}
+#cv{display:block;max-width:100%;height:auto;cursor:crosshair;touch-action:none;background:#fff}
+#cv.sel{cursor:default}
+#cv.move{cursor:move}
+.side label{display:block;font-weight:bold;margin:.8em 0 .2em}
+.side input[type=text],.side textarea{width:100%}
+.side textarea{resize:vertical}
+.help{background:#faf9f6;border-radius:8px;padding:8px;margin:0}
+.privacy{margin:4px 16px 0;padding:8px 12px;background:#eef5f8;border-radius:8px}
+.doc{max-width:860px;margin:16px auto;padding:0 16px 48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 16px}
+footer{font-size:.9rem;color:var(--sub)}
+#print-area{display:none}
+#print-area:empty::before{content:"このページは「印刷・PDF にする」ボタンから印刷してください。";display:block;padding:20mm;font-size:14pt}
+
+/* 印刷：A4 のページだけを出す */
+@page{size:A4 portrait;margin:0}
+@media print{
+  html,body{background:#fff}
+  #app{display:none}
+  #print-area{display:block}
+  .page{width:210mm;height:296.5mm;padding:12mm;overflow:hidden;page-break-after:always;break-after:page;position:relative;font-family:"Yu Gothic","Meiryo","Hiragino Sans",sans-serif;color:#222}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  .page .t-big{font-size:18pt;font-weight:bold;margin:0 0 4mm;line-height:1.3;white-space:nowrap;overflow:hidden}
+  .page .t-big.long{font-size:13pt}
+  .page .t-small{position:absolute;top:5mm;right:12mm;font-size:9pt;color:#666;margin:0}
+  .page .step{margin-bottom:6mm}
+  .page .step h3{font-size:12pt;margin:0 0 2mm}
+  .page .ph{display:flex;justify-content:center}
+  .page .ph img{display:block;border:0.3mm solid #bbb}
+  .page .cap{font-size:10.5pt;line-height:1.5;margin:2mm 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .page .no{position:absolute;bottom:6mm;right:12mm;font-size:9pt;color:#666;margin:0}
+}
