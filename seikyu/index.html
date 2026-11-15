@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>見積書・請求書・領収書メーカー｜登録なし・広告なし・無料</title>
+<meta name="description" content="見積書・請求書・領収書を、登録なし・広告なしで作れる無料ページ。消費税（10%・8%）の混在、源泉徴収、登録番号に対応。入力した内容はどこにも送りません。A4 1枚で印刷・PDF保存。">
+<link rel="stylesheet" href="seikyu.css">
+</head>
+<body>
+<noscript><p class="noscript">このページは JavaScript を使います。Chrome・Edge などで開いてください。</p></noscript>
+
+<header class="top no-print">
+  <div>
+    <h1>見積書・請求書・領収書メーカー</h1>
+    <p class="lead">登録なし・広告なし。入力した内容はこのページの中だけで使い、どこにも送りません（保存もしません）。</p>
+  </div>
+  <div class="top-btns">
+    <button type="button" id="btnSample">見本を入れる</button>
+    <button type="button" id="btnClear">全部消す</button>
+    <button type="button" id="btnPrint" class="primary">印刷・PDFで保存</button>
+  </div>
+</header>
+
+<p id="printBlocked" class="print-blocked">入力にまちがいがあるか、A4 1枚に入らないため印刷できません。画面に戻って直してください。</p>
+
+<main class="wrap">
+  <section class="form no-print" aria-label="入力">
+    <div class="tabs" role="tablist" aria-label="書類の種類">
+      <button type="button" role="tab" id="tabEstimate" data-kind="estimate" aria-selected="false">見積書</button>
+      <button type="button" role="tab" id="tabInvoice" data-kind="invoice" aria-selected="true">請求書</button>
+      <button type="button" role="tab" id="tabReceipt" data-kind="receipt" aria-selected="false">領収書</button>
+    </div>
+
+    <fieldset>
+      <legend>宛先</legend>
+      <div class="row">
+        <label class="grow">宛名 <input type="text" id="fTo" maxlength="40" autocomplete="off" placeholder="株式会社〇〇"></label>
+        <span class="radios" role="radiogroup" aria-label="敬称">
+          <label><input type="radio" name="hon" value="御中" checked> 御中</label>
+          <label><input type="radio" name="hon" value="様"> 様</label>
+        </span>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>発行者（あなた）</legend>
+      <label>名前・屋号 <input type="text" id="fIssuer" maxlength="40" autocomplete="off"></label>
+      <label>住所（1行目） <input type="text" id="fAddr1" maxlength="40" autocomplete="off"></label>
+      <label>住所（2行目） <input type="text" id="fAddr2" maxlength="40" autocomplete="off"></label>
+      <div class="row">
+        <label class="grow">電話 <input type="text" id="fTel" maxlength="20" autocomplete="off"></label>
+        <label class="grow">メール <input type="text" id="fMail" maxlength="60" autocomplete="off"></label>
+      </div>
+      <label>登録番号（インボイス） <input type="text" id="fReg" maxlength="20" autocomplete="off" placeholder="T1234567890123"></label>
+      <p class="msg" id="regMsg" role="status"></p>
+      <div class="row">
+        <span class="radios" role="radiogroup" aria-label="印">
+          印：
+          <label><input type="radio" name="stamp" value="none" checked> なし</label>
+          <label><input type="radio" name="stamp" value="square"> 角印</label>
+          <label><input type="radio" name="stamp" value="round"> 丸印</label>
+        </span>
+        <label class="grow">印の文字（8字まで） <input type="text" id="fStampText" maxlength="8" autocomplete="off"></label>
+      </div>
+      <p class="hint">印は見た目だけのものです。登録した印鑑の代わりにはなりません。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>書類</legend>
+      <div class="row">
+        <label class="grow">番号 <input type="text" id="fNo" maxlength="20" autocomplete="off"></label>
+        <label class="grow"><span id="dateLabel">発行日</span> <input type="date" id="fDate" min="2000-01-01" max="2099-12-31"></label>
+        <label class="grow" id="dueWrap"><span id="dueLabel">お支払期限</span> <input type="date" id="fDue" min="2000-01-01" max="2099-12-31"></label>
+      </div>
+      <label>件名 <input type="text" id="fSubject" maxlength="40" autocomplete="off" placeholder="Webページ作成一式"></label>
+      <label id="receiptForWrap">但し書き（領収書） <input type="text" id="fReceiptFor" maxlength="40" autocomplete="off" placeholder="空なら件名を使います"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>品目（15行まで）</legend>
+      <div class="items-head" aria-hidden="true"><span>品名</span><span>数量</span><span>単位</span><span>単価（円）</span><span>税率</span><span></span></div>
+      <div id="items"></div>
+      <button type="button" id="btnAddRow">＋ 行を足す</button>
+      <p class="hint">値引きは、単価にマイナス（例：-2000）を入れ、値引きする品と同じ税率を選んでください。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>計算の決まり</legend>
+      <div class="radios block" role="radiogroup" aria-label="単価の入れ方">
+        単価は：
+        <label><input type="radio" name="pm" value="excl" checked> 税抜</label>
+        <label><input type="radio" name="pm" value="incl"> 税込</label>
+      </div>
+      <div class="radios block" role="radiogroup" aria-label="消費税の端数">
+        消費税の1円未満：
+        <label><input type="radio" name="rnd" value="floor" checked> 切り捨て</label>
+        <label><input type="radio" name="rnd" value="round"> 四捨五入</label>
+        <label><input type="radio" name="rnd" value="ceil"> 切り上げ</label>
+      </div>
+      <label class="check"><input type="checkbox" id="fWh"> 源泉徴収税額を書く</label>
+      <p class="hint">相手が会社などで、あなたが個人として原稿料・デザイン料などを受け取るときに使います。必要かどうかは相手の会社に確かめてください。</p>
+      <label class="check" id="exemptWrap"><input type="checkbox" id="fExempt"> 私は消費税の免税事業者です（領収書の印紙の目安に使います）</label>
+    </fieldset>
+
+    <fieldset id="bankWrap">
+      <legend>お振込先（請求書）</legend>
+      <textarea id="fBank" rows="2" maxlength="120" placeholder="〇〇銀行 〇〇支店 普通 1234567 ミホン タロウ"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>備考</legend>
+      <textarea id="fNote" rows="3" maxlength="200" placeholder="振込手数料はご負担ください など"></textarea>
+    </fieldset>
+
+    <div id="errors" class="errors" role="alert"></div>
+  </section>
+
+  <section class="preview-col" aria-label="A4 の見た目">
+    <div class="paper-scale" id="paperScale">
+      <article class="paper" id="paper"></article>
+    </div>
+    <div class="no-print side-info">
+      <p id="stampInfo" class="stamp-info"></p>
+      <p id="invoiceInfo" class="msg"></p>
+      <details>
+        <summary>計算の式を見る</summary>
+        <ul id="explain" class="explain"></ul>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="foot no-print">
+  <p>このページは入力を保存しません。必要なら「印刷・PDFで保存」で PDF にしてください。計算は国税庁の決まり（消費税の端数は税率ごとに1回、源泉徴収 10.21%・100万円を超える分は 20.42%）にそっていますが、出す前に金額を確かめてください。税の判断は税務署・税理士へ。</p>
+  <p><a href="https://note.com/nao_mojiokoshi" rel="noopener">毎月の見積 → 請求 → 入金の管理を Excel でまとめたい方へ（note）</a></p>
+  <p class="small">作った人：なお｜手順書・マニュアル作成 ／ <a href="../about/">このサイトについて</a></p>
+</footer>
+
+<script src="calc.js"></script>
+<script src="sample.js"></script>
+<script src="seikyu-ui.js"></script>
+</body>
+</html>
