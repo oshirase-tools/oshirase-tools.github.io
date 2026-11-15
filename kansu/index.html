@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Excel・スプレッドシート 関数＆エラー直し3秒レシピ作成機｜登録不要・無料</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="badge-row">
+        <span class="badge">会員登録なし・完全無料</span>
+        <span class="badge">外部通信ゼロ（入力内容は外に送られません）</span>
+        <span class="badge">Excel・Googleスプレッドシート両対応</span>
+      </div>
+      <h1>Excel・スプレッドシート 関数＆エラー直し3秒レシピ作成機</h1>
+      <p class="subtitle">やりたいことや今出ているエラー（#N/A・0落ち等）を選ぶだけで、列番号や「$（ズレ防止）」が自動で入った完成数式と直し方が3秒で出ます。</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="mode-tabs" role="tablist">
+      <button type="button" id="tab-btn-recipe" class="tab-btn active">1. やりたいことから数式を作る（実用8選）</button>
+      <button type="button" id="tab-btn-error" class="tab-btn">2. 出ているエラー・困りごとを直す（救急箱7選）</button>
+    </div>
+
+    <!-- モード1：やりたいことから数式を作る -->
+    <section id="panel-recipe" class="panel">
+      <div class="top-action-bar">
+        <span>初めての方へ：ボタンを押すと具体例が1秒で入ります →</span>
+        <button type="button" id="btn-load-sample" class="btn-secondary">見本で3秒体験する（別シート照合の例）</button>
+        <button type="button" id="btn-swap-left" class="btn-secondary">「探す列より左の列」を取り出す例を試す</button>
+      </div>
+
+      <div class="grid-2col">
+        <!-- 左カラム：条件の選択 -->
+        <div class="card">
+          <h2>手順1：やりたいことと列を選ぶ</h2>
+
+          <label class="field-label" for="recipe-select">1. やりたいことを選ぶ</label>
+          <select id="recipe-select" class="input-control">
+            <option value="lookup">① 別の表から一致するデータを持ってくる（VLOOKUP / XLOOKUP）</option>
+            <option value="sumifs">② 条件に合う行だけ「合計金額」を出す（SUMIF / SUMIFS）</option>
+            <option value="countifs">③ 条件に合うデータの「件数（人数）」を数える（COUNTIF / COUNTIFS）</option>
+            <option value="if_basic">④ もし〇〇以上なら「合格」、違ったら「再確認」と出す（IF）</option>
+            <option value="if_and_or">⑤ 2つの条件の「両方（または片方）」を満たすとき印をつける（IF＋AND/OR）</option>
+            <option value="clean_text">⑥ 前後の余分な空白を消し、全角の英数字を半角にそろえる（TRIM＋ASC。カタカナも半角になります）</option>
+            <option value="round_tax">⑦ 消費税（10%）や金額の端数を切り捨て・四捨五入する（ROUNDDOWN）</option>
+            <option value="dup_check">⑧ 名簿や商品コードの「重複（ダブり）」を見つけて印をつける（COUNTIF）</option>
+          </select>
+          <p id="recipe-desc" class="help-box"></p>
+
+          <div class="form-row-2">
+            <div>
+              <label class="field-label" for="key-cell">2. 探す値（または元の値）があるセル</label>
+              <input type="text" id="key-cell" class="input-control" value="A2" maxlength="10">
+            </div>
+            <div>
+              <label class="field-label" for="sheet-name">3. 探す表のシート名（同じシートなら空欄）</label>
+              <input type="text" id="sheet-name" class="input-control" placeholder="例：商品マスタ（空欄なら同じシート）" maxlength="40">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div>
+              <label class="field-label" for="search-col">4. 探す列（または条件の列）</label>
+              <select id="search-col" class="input-control"></select>
+            </div>
+            <div>
+              <label class="field-label" for="target-col">5. 取り出したい列（または合計列）</label>
+              <select id="target-col" class="input-control"></select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div>
+              <label class="field-label" for="start-row">6. 表の開始行（何行目から）</label>
+              <input type="number" id="start-row" class="input-control" value="2" min="1" max="1000000">
+            </div>
+            <div>
+              <label class="field-label" for="end-row">7. 表の終了行（何行目まで）</label>
+              <input type="number" id="end-row" class="input-control" value="100" min="1" max="1000000">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div>
+              <label class="field-label" for="cond1-input">8. 探す文字・条件1（合計・件数・IF用）</label>
+              <input type="text" id="cond1-input" class="input-control" value="営業部" maxlength="40">
+            </div>
+            <div>
+              <label class="field-label" for="cond2-input">9. 条件2（複数条件のとき）</label>
+              <input type="text" id="cond2-input" class="input-control" value="支払済" maxlength="40">
+            </div>
+          </div>
+
+          <label class="field-label" for="fallback-select">10. 見つからないとき（エラー時）の表示</label>
+          <select id="fallback-select" class="input-control">
+            <option value="blank">空白にする（何も表示しない ""）</option>
+            <option value="unregistered">「未登録」と表示する</option>
+            <option value="zero">「0」と表示する</option>
+          </select>
+
+          <div class="checkbox-group">
+            <label class="chk-label">
+              <input type="checkbox" id="chk-blank" checked>
+              <span>元のセルが空欄のときは、結果も空欄にする（<code>IF(A2="","",...)</code>）</span>
+            </label>
+            <label class="chk-label">
+              <input type="checkbox" id="chk-iferror" checked>
+              <span>エラー（<code>#N/A</code> 等）が出ないように自動で包む（<code>IFERROR</code>）</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 右カラム：完成した数式と解説 -->
+        <div class="card result-card">
+          <h2>手順2：完成した数式をコピーして貼る</h2>
+
+          <div id="warning-box" class="warning-box hidden"></div>
+
+          <div class="formula-box-wrap">
+            <div class="formula-header">
+              <span class="formula-badge">そのまま使える完成数式（どのExcel・スプレッドシートでも動きます）</span>
+              <button type="button" id="btn-copy-primary" class="btn-primary">この数式をコピーする</button>
+            </div>
+            <pre id="primary-formula" class="formula-code"></pre>
+          </div>
+
+          <div id="secondary-wrap" class="formula-box-wrap secondary-box">
+            <div class="formula-header">
+              <span id="secondary-label" class="formula-sub-badge"></span>
+              <button type="button" id="btn-copy-secondary" class="btn-secondary">こちらの数式をコピーする</button>
+            </div>
+            <pre id="secondary-formula" class="formula-code"></pre>
+          </div>
+
+          <div class="explanation-card">
+            <h3>この数式がやっていること（やさしい日本語解説）</h3>
+            <pre id="formula-explanation" class="explanation-text"></pre>
+          </div>
+
+          <div class="preview-card">
+            <h3>表のイメージ見本</h3>
+            <div class="table-scroll">
+              <table class="preview-table">
+                <tbody id="preview-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- モード2：出ているエラー・困りごとを直す -->
+    <section id="panel-error" class="panel hidden">
+      <div class="card">
+        <h2>今出ているエラーや困りごとを選んでください</h2>
+        <label class="field-label" for="error-select">症状・エラー表示を選ぶ</label>
+        <select id="error-select" class="input-control error-select-large">
+          <option value="err_na">1. #N/A が出た！（VLOOKUP・XLOOKUPで「値が見つからない」と言われる）</option>
+          <option value="err_value">2. #VALUE! が出た！（計算の中に文字や空白 "" が混ざっている）</option>
+          <option value="err_div0">3. #DIV/0! が出た！（割り算の分母が 0 または空欄になっている）</option>
+          <option value="err_ref">4. #REF! が出た！（参照していた行・列を消した ／ 列番号オーバー）</option>
+          <option value="err_name">5. #NAME? が出た！（関数名のつづり間違い ／ 文字の "" 囲み忘れ）</option>
+          <option value="err_zero">6. 電話番号（090...）やコード（0012）の「先頭の 0」が消えてしまう！</option>
+          <option value="err_serial">7. 日付が「45610」のような5桁の数字になった ／ 数式が文字のまま計算されない！</option>
+        </select>
+
+        <div class="error-detail-box">
+          <h3 id="err-title" class="err-title"></h3>
+          <p id="err-summary" class="err-summary"></p>
+
+          <div class="err-grid">
+            <div class="err-col">
+              <h4>よくある原因（上から順番に確かめてください）</h4>
+              <ul id="err-causes" class="clean-list"></ul>
+              <div id="err-protip" class="protip-box"></div>
+            </div>
+
+            <div class="err-col">
+              <h4>エラーが出なくなる書き換え見本</h4>
+              <div class="before-after-box">
+                <div class="ba-label">直す前（エラーが出やすい式）：</div>
+                <pre id="err-before" class="formula-code small-code"></pre>
+                <div class="ba-label good">直した後（そのまま使える安心な式）：</div>
+                <pre id="err-after" class="formula-code small-code good-code"></pre>
+                <button type="button" id="btn-copy-err-after" class="btn-primary full-width-btn">改善後の数式をコピーする</button>
+              </div>
+
+              <h4>直し方の手順</h4>
+              <ul id="err-steps" class="clean-list"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <h3>あわせて使える無料お直し・作成道具（登録不要）</h3>
+      <div class="footer-links">
+        <a href="/hyoki/" class="footer-card-link">1. 表記ゆれ・全角半角・空白お直し道具（#N/Aの原因になるスペースや全角を3秒で統一）</a>
+        <a href="/tejunsho/" class="footer-card-link">2. スクショ番号＆モザイク手順書メーカー（画像に①②③と赤枠を入れて迷わない手順書に）</a>
+        <a href="/seikyu/" class="footer-card-link">3. 見積書・請求書・領収書メーカー（1クリック切替・A4印刷＆PDF保存）</a>
+      </div>
+      <p class="footer-note">
+        制作：なお（手順書・マニュアル・表の整理）｜
+        <a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener noreferrer">詳しい使い方解説・表の作成やエラー直しのご相談案内（note）</a>
+      </p>
+      <p class="disclaimer">※このページはブラウザの中だけで計算を行っており、入力した文字や表の内容が外部に送信・保存されることはありません。</p>
+    </div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
