@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>AI画像・動画・図解の指示文メーカー｜登録不要・無料</title>
+  <meta name="description" content="note の見出し画像・SNS の投稿画像・8秒の動画・手順の図解を AI に頼むときの指示文を、選んで書くだけで組み立てる無料ページです。入力は外に送りません。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <p class="badges"><span class="badge">登録なし・無料</span><span class="badge badge-blue">入力は外に送りません（ブラウザの中だけで組み立てます）</span></p>
+      <h1>AI画像・動画・図解の指示文メーカー</h1>
+      <p class="lead">作りたい物を選んで空欄を埋めると、Gemini や ChatGPT など、画像を作れる AI（動画は動画を作れるサービス）に貼る指示文ができます。文字の入れすぎや、実在の人・ロゴに似せる指示など、失敗しやすい所も知らせます。</p>
+    </div>
+  </header>
+
+  <main class="container grid">
+    <section class="panel" aria-labelledby="h-input">
+      <h2 id="h-input">1. 作りたい物を選んで、空欄を埋める</h2>
+      <div class="samples" role="group" aria-label="見本">
+        <span>見本で試す：</span>
+        <button type="button" id="sample-header" class="btn-sample">見出し画像</button>
+        <button type="button" id="sample-sns" class="btn-sample">SNS 画像</button>
+        <button type="button" id="sample-video" class="btn-sample">8秒動画</button>
+        <button type="button" id="sample-diagram" class="btn-sample">図解</button>
+      </div>
+
+      <div class="row">
+        <label for="kind">作りたい物</label>
+        <select id="kind">
+          <option value="header">note・ブログの見出し画像</option>
+          <option value="sns">SNS の投稿画像</option>
+          <option value="video">8秒の短い動画</option>
+          <option value="diagram">手順・仕組みの図解</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label for="subject">何を見せるか（必須・200文字まで）</label>
+        <textarea id="subject" rows="3" maxlength="400" placeholder="例：机の上で、散らかったメモが1枚の手順書にまとまっていく様子"></textarea>
+        <p class="hint">だれが・どこで・何をしているかを書くと、思った絵に近づきます。</p>
+      </div>
+
+      <div class="row" id="row-steps" hidden>
+        <label for="steps">図にする手順（1行に1つ・6つまで）</label>
+        <textarea id="steps" rows="5" maxlength="600" placeholder="注文のメールを確かめる&#10;在庫を表で確かめる&#10;箱に入れて送り状を貼る"></textarea>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="mood">雰囲気</label>
+          <select id="mood">
+            <option value="soft">やさしい</option>
+            <option value="clean">すっきり</option>
+            <option value="pop">明るく元気</option>
+            <option value="calm">落ち着いて信頼感</option>
+            <option value="premium">上品</option>
+          </select>
+        </div>
+        <div>
+          <label for="style">絵のタッチ</label>
+          <select id="style">
+            <option value="illust">やわらかいイラスト</option>
+            <option value="flat">シンプルな図（フラット）</option>
+            <option value="photo">写真のような見た目</option>
+            <option value="hand">手書き風</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="colors">中心にする色（なくてもよい）</label>
+          <input type="text" id="colors" maxlength="60" placeholder="例：紺と白">
+        </div>
+        <div>
+          <label for="shape">形</label>
+          <select id="shape"></select>
+        </div>
+      </div>
+
+      <div class="row" id="row-motion" hidden>
+        <label for="motion">動き（動画のとき）</label>
+        <select id="motion">
+          <option value="zoom">ゆっくり近づく</option>
+          <option value="pan">ゆっくり横に動く</option>
+          <option value="still">カメラは止めて、主題だけ少し動く</option>
+        </select>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="text-mode">画像の中の文字</label>
+          <select id="text-mode">
+            <option value="inside">短い文字を1か所だけ入れる</option>
+            <option value="later">文字は入れない（後から自分で入れる）</option>
+          </select>
+        </div>
+        <div id="row-img-text">
+          <label for="img-text">入れる文字（<span id="text-limit">15文字以内がおすすめ</span>）</label>
+          <input type="text" id="img-text" maxlength="40" placeholder="例：手順書の作り方">
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="check"><input type="checkbox" id="no-hands"> 手や指のアップは入れない（AI の絵で形が崩れやすい所です）</label>
+      </div>
+      <button type="button" id="btn-clear" class="btn-text">入力を空にする</button>
+    </section>
+
+    <section class="panel" aria-labelledby="h-output">
+      <h2 id="h-output">2. できた指示文をコピーして、AI に貼る</h2>
+      <div id="warn-box" class="warn" hidden>
+        <p class="warn-title">気をつける所</p>
+        <ul id="warnings"></ul>
+      </div>
+      <label for="output" class="sr-only">できた指示文</label>
+      <textarea id="output" rows="18" readonly></textarea>
+      <div class="actions">
+        <button type="button" id="btn-copy" class="btn-primary">指示文をコピー</button>
+        <span id="copy-status" class="status" aria-live="polite"></span>
+      </div>
+      <ul class="notes">
+        <li>画像や動画を作れるかどうか、作れる回数は、使う AI のサービスと契約によってちがいます。</li>
+        <li>AI は日本語の文字をよく書き間違えます。文字はできるだけ後から自分で入れると確実です。</li>
+        <li>自分のお店のロゴや名前は、AI に描かせず、できた画像に後から重ねてください。</li>
+        <li>できた画像を仕事や販売に使う前に、使う AI サービスの利用規約で、使ってよい範囲を確かめてください。</li>
+      </ul>
+    </section>
+  </main>
+
+  <section class="container guide">
+    <h2>使い方の説明</h2>
+    <p>ほかの無料ツールの使い方や、AI を仕事に使うときのコツは、note の記事にまとめています。</p>
+    <a id="note-link" class="btn-note" href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener noreferrer">note の記事一覧を見る →</a>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>※このページは、入力した言葉を決まった形に並べて指示文を作るだけの道具です。AI に送ったり、画像を作ったりはしません。入力した内容は保存しません。<br>Gemini は Google LLC の、ChatGPT は OpenAI の商標です。このページはどちらの会社とも関係ありません。</p>
+      <nav aria-label="ほかの無料ツール">
+        <span>ほかの無料ツール：</span>
+        <a href="/ai-check/">AIっぽさ診断</a>
+        <a href="/kansu/">関数＆エラー3秒レシピ</a>
+        <a href="/tejunsho/">スクショ手順書メーカー</a>
+        <a href="/hyoki/">表記ゆれお直し</a>
+        <a href="/seikyu/">見積・請求・領収書メーカー</a>
+      </nav>
+    </div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
