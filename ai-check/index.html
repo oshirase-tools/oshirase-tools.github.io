@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>文章の「AIっぽさ」3秒診断＆人間味お直しチェッカー｜登録不要・無料</title>
+  <meta name="description" content="ChatGPTやAIで作った文章の「AIっぽい口ぐせ（チャッピー構文）・太字記号の消し忘れ・同じ語尾の連続」を色分けで点検し、言い換えのヒントと記号のまとめ消しができる無料ツールです（AIが書いたかの判定ではありません）。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="badge-row">
+        <span class="badge badge-safe">登録不要・完全無料</span>
+        <span class="badge badge-local">外部への送信・保存なし（ブラウザ内処理）</span>
+      </div>
+      <h1>文章の「AIっぽさ」3秒診断＆人間味お直しチェッカー</h1>
+      <p class="subtitle">
+        「結論から言うと」「**太字記号**」「同じ語尾の3連続」など、読み手が<strong>「これAIが書いたそのまま？」</strong>と感じやすい5つのクセを3秒で色分け点検し、自然な言葉への言い換えヒントを出します。
+      </p>
+    </div>
+  </header>
+
+  <main class="container main-grid">
+    <!-- 左カラム：入力＆1クリックお掃除 -->
+    <section class="panel input-panel" aria-labelledby="input-heading">
+      <div class="panel-header">
+        <h2 id="input-heading">1. 点検したい文章を入れる（または見本で試す）</h2>
+      </div>
+
+      <div class="sample-bar" role="group" aria-label="3秒で試せる見本ボタン">
+        <span class="sample-label">見本で3秒体験：</span>
+        <button type="button" id="btn-sample-high" class="btn btn-sample btn-sample-danger">見本①：AI丸出しのブログ文</button>
+        <button type="button" id="btn-sample-mid" class="btn btn-sample btn-sample-warn">見本②：AIっぽい連絡メール</button>
+        <button type="button" id="btn-sample-low" class="btn btn-sample btn-sample-good">見本③：自然な人間の文章</button>
+      </div>
+
+      <div class="textarea-wrap">
+        <label for="source-text" class="sr-only">点検したい文章</label>
+        <textarea id="source-text" rows="12" placeholder="ここにブログ記事・メール・SNS投稿・レポートなどの下書きを貼り付けてください（文字を入れると同時に右側で3秒診断されます）。"></textarea>
+        <div class="text-meta">
+          <span id="char-count">0文字</span>
+          <span id="sentence-count">0文</span>
+          <button type="button" id="btn-clear" class="btn-text">入力をクリア</button>
+        </div>
+      </div>
+
+      <div class="cleanup-box">
+        <div class="cleanup-header">
+          <h3>AIの消し忘れを防ぐ「1クリックお掃除」</h3>
+          <p>コピペしたときに残りやすい <code>**太字**</code> と定番絵文字（💡🚀📌✨）を1クリックで消し、行頭の <code>### </code> は「■」に変えます。お掃除の後は「元に戻す」で戻せます。</p>
+        </div>
+        <div class="cleanup-options">
+          <label class="check-label"><input type="checkbox" id="opt-clean-md" checked> 記号を整える（<code>**</code> は消し、行頭の <code>###</code> は「■」に）</label>
+          <label class="check-label"><input type="checkbox" id="opt-clean-emoji" checked> AI定番絵文字（💡🚀📌✅✨等）を消す</label>
+          <label class="check-label"><input type="checkbox" id="opt-clean-colon"> 箇条書きの「・〇〇：」の「：」を空白に変える</label>
+        </div>
+        <div class="cleanup-actions">
+          <button type="button" id="btn-clean-apply" class="btn btn-primary">AI記号・定番絵文字を1クリックでお掃除する</button>
+          <button type="button" id="btn-undo" class="btn btn-secondary" disabled>元に戻す</button>
+          <button type="button" id="btn-copy-text" class="btn btn-secondary">今の文章をコピー</button>
+        </div>
+        <p id="clean-status" class="status-msg" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- 右カラム：診断スコア・5項目メーター・色分けハイライト・言い換えレシピ -->
+    <section class="panel result-panel" aria-labelledby="result-heading">
+      <div class="panel-header">
+        <h2 id="result-heading">2. 「AIっぽさ（チャッピー構文度）」診断結果</h2>
+      </div>
+
+      <!-- スコアカード -->
+      <div id="score-card" class="score-card level-good">
+        <div class="score-main">
+          <div class="score-circle">
+            <span class="score-label">AIっぽさ</span>
+            <div class="score-number-wrap">
+              <span id="score-value" class="score-value">0</span><span class="score-unit">点</span>
+            </div>
+          </div>
+          <div class="score-summary">
+            <p class="rank-comment">※AIが書いたかどうかの判定ではありません（読む人がAIっぽいと感じやすい書き方の目安です）。</p>
+            <div id="rank-badge" class="rank-badge">文字を入力してください</div>
+            <p id="rank-comment" class="rank-comment">左の入力欄に文章を入れるか、「見本①〜③」ボタンを押すと3秒で診断結果が出ます。</p>
+            <div class="share-row">
+              <button type="button" id="btn-copy-share" class="btn btn-share">診断結果テキストをコピー（SNSシェア用）</button>
+              <span id="share-status" class="share-status" aria-live="polite"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5項目メーター -->
+        <div class="meter-list" id="meter-list">
+          <div class="meter-item">
+            <div class="meter-top">
+              <span class="meter-name"><span class="dot dot-sym"></span>① AI記号・定番絵文字の残り</span>
+              <span id="count-sym" class="meter-count">0箇所</span>
+            </div>
+            <div class="meter-bar-bg"><div id="bar-sym" class="meter-bar-fill fill-sym"></div></div>
+          </div>
+          <div class="meter-item">
+            <div class="meter-top">
+              <span class="meter-name"><span class="dot dot-phrase"></span>② お決まりAI構文（チャッピー定型句）</span>
+              <span id="count-phrase" class="meter-count">0箇所</span>
+            </div>
+            <div class="meter-bar-bg"><div id="bar-phrase" class="meter-bar-fill fill-phrase"></div></div>
+          </div>
+          <div class="meter-item">
+            <div class="meter-top">
+              <span class="meter-name"><span class="dot dot-praise"></span>③ 過剰なヨイショ・優等生フレーズ</span>
+              <span id="count-praise" class="meter-count">0箇所</span>
+            </div>
+            <div class="meter-bar-bg"><div id="bar-praise" class="meter-bar-fill fill-praise"></div></div>
+          </div>
+          <div class="meter-item">
+            <div class="meter-top">
+              <span class="meter-name"><span class="dot dot-abst"></span>④ 翻訳調・硬すぎる抽象語</span>
+              <span id="count-abst" class="meter-count">0箇所</span>
+            </div>
+            <div class="meter-bar-bg"><div id="bar-abst" class="meter-bar-fill fill-abst"></div></div>
+          </div>
+          <div class="meter-item">
+            <div class="meter-top">
+              <span class="meter-name"><span class="dot dot-end"></span>⑤ 同じ語尾の3連続・数字のなさ</span>
+              <span id="count-end" class="meter-count">0箇所</span>
+            </div>
+            <div class="meter-bar-bg"><div id="bar-end" class="meter-bar-fill fill-end"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 色分けプレビュー -->
+      <div class="highlight-section">
+        <div class="section-title-row">
+          <h3>本文の色分け点検プレビュー</h3>
+          <div class="legend-row">
+            <span class="legend-chip hl-sym">記号・絵文字</span>
+            <span class="legend-chip hl-phrase">AI定型句</span>
+            <span class="legend-chip hl-praise">優等生・ヨイショ</span>
+            <span class="legend-chip hl-abst">翻訳調・抽象語</span>
+            <span class="legend-chip hl-end">同じ語尾の連続</span>
+          </div>
+        </div>
+        <div id="highlight-preview" class="highlight-box">ここに色分けされた文章が表示されます。</div>
+      </div>
+
+      <!-- 言い換えレシピ一覧 -->
+      <div class="advice-section">
+        <h3>見つかった「AIっぽい表現」と自然な言い換えヒント</h3>
+        <ul id="advice-list" class="advice-list">
+          <li class="advice-empty">まだ検出された項目はありません。</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- 次のステップ案内（ワンクッション方式：note記事への案内） -->
+  <section class="container guide-section" aria-labelledby="guide-heading">
+    <div class="guide-card">
+      <h2 id="guide-heading">使い方と、色を付ける5つの所の説明</h2>
+      <p>
+        このページの使い方と、色を付ける5つの所の直し方を、note の無料記事にまとめています。文章の中身から整えたいときの方法も、記事の最後に書いています。
+      </p>
+      <div class="guide-links">
+        <a href="https://note.com/nao_mojiokoshi" target="_blank" rel="noopener noreferrer" class="btn btn-note">
+          note の無料記事：使い方と5つの所の直し方を読む →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="disclaimer">
+        ※ご注意：このツールは「その文章をAIが書いたかどうか」の真偽を判定・保証するものではなく、読み手が「AIっぽい（チャッピー構文）」と感じやすい記号の消し忘れ・定型句・語尾の重なりをブラウザ内のルールで点検する作成補助ツールです。入力した文章はお使いの端末内だけで処理され、外部へ送信・保存されることは一切ありません。
+      </p>
+      <nav class="footer-nav" aria-label="関連する無料ツール">
+        <span>無料の姉妹ツール：</span>
+        <a href="/hyoki/">表記ゆれ一括お直し</a>
+        <a href="/tejunsho/">スクショ手順書メーカー</a>
+        <a href="/seikyu/">見積・請求・領収書メーカー</a>
+        <a href="/kansu/">関数＆エラー3秒レシピ</a>
+        <a href="/">お休みのお知らせ作成</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
