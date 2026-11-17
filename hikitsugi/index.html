@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>引き継ぎ手順書メーカー｜箇条書きのメモを4つの枠に整える・登録不要・無料</title>
+  <meta name="description" content="箇条書きのメモを貼ると「始める前に・手順・うまくいったか・困ったとき」の枠に並べ、あいまいな言葉や抜けを知らせる無料ページです。A4 で印刷でき、Word やチャットに貼れます。入力は外に送りません。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header no-print">
+    <div class="container">
+      <p class="badges"><span class="badge">登録なし・無料</span><span class="badge badge-blue">入力は外に送りません（ブラウザの中だけで整えます）</span></p>
+      <h1>引き継ぎ手順書メーカー</h1>
+      <p class="lead">箇条書きのメモを貼ると、「始める前に・手順・うまくいったか・困ったとき」の枠に並べます。「適宜」「しばらく」のようなあいまいな言葉や、書き忘れやすい所も知らせます。</p>
+    </div>
+  </header>
+
+  <main class="container grid">
+    <section class="panel no-print" aria-labelledby="h-in">
+      <h2 id="h-in">1. メモを貼る</h2>
+      <div class="samples" role="group" aria-label="見本">
+        <span>見本で試す：</span>
+        <button type="button" id="sample-keiri" class="btn-sample">月末の請求書</button>
+        <button type="button" id="sample-shop" class="btn-sample">ネットショップの発送</button>
+        <button type="button" id="sample-daily" class="btn-sample">毎日の入力</button>
+      </div>
+      <div class="row">
+        <label for="title">作業の名前</label>
+        <input type="text" id="title" maxlength="60" placeholder="例：月末の請求書の発行">
+      </div>
+      <div class="row two">
+        <div><label for="owner">作った人（なくてもよい）</label><input type="text" id="owner" maxlength="30" placeholder="例：総務"></div>
+        <div><label for="date">作成日（なくてもよい）</label><input type="text" id="date" maxlength="20" placeholder="例：2026/11/17"></div>
+      </div>
+      <div class="row two">
+        <div><label for="minutes">かかる時間の目安</label><input type="text" id="minutes" maxlength="20" placeholder="例：30分ほど"></div>
+        <div><label for="contact">困ったときに聞く相手</label><input type="text" id="contact" maxlength="60" placeholder="例：経理の担当"></div>
+      </div>
+      <div class="row">
+        <label for="memo">メモ（1行に1つ。80行まで）</label>
+        <textarea id="memo" rows="12" maxlength="10000" placeholder="例：&#10;請求ソフトにログインしておく&#10;今月の売上表を開く&#10;請求書を作る"></textarea>
+        <p class="hint">「【始める前に】」「【手順】」「【うまくいったか】」「【困ったとき】」の見出しの行を書くと、その下の行をその枠に入れます。「目的：〜」の1行（または【目的】の見出し）を書くと、題名の下に目的として出します。見出しがないときは、言葉から枠を決めます（まちがえることもあるので、見出しを書くのが確実です）。</p>
+      </div>
+      <button type="button" id="btn-clear" class="btn-text">入力を空にする</button>
+    </section>
+
+    <section class="panel" aria-labelledby="h-out">
+      <h2 id="h-out" class="no-print">2. できた手順書と、赤ペンの点検</h2>
+      <div class="review no-print">
+        <p class="review-title">赤ペンの点検（<span id="review-count">0件</span>）<span class="review-note">決まったルールで探しています。AI は使っていません</span></p>
+        <ul id="review"></ul>
+      </div>
+      <div id="notes-box" class="notes-box no-print" hidden><ul id="notes"></ul></div>
+      <div class="actions no-print">
+        <button type="button" id="btn-print" class="btn-primary">A4 で印刷・PDF で保存</button>
+        <button type="button" id="btn-copy-text" class="btn-secondary">Word・チャット用にコピー</button>
+        <button type="button" id="btn-copy-md" class="btn-secondary">Markdown でコピー</button>
+      </div>
+      <p id="status" class="status no-print" aria-live="polite"></p>
+      <label for="fallback" class="sr-only">コピー用の文字</label>
+      <textarea id="fallback" class="no-print" rows="6" readonly hidden></textarea>
+      <article id="preview" class="preview" aria-label="手順書のプレビュー"></article>
+    </section>
+  </main>
+
+  <section class="container guide no-print">
+    <h2>手順書づくりのコツ</h2>
+    <p>手順書で書き忘れやすい所や、読む人が迷いにくい書き方を、note の無料記事にまとめています。</p>
+    <a id="note-link" class="btn-note" href="https://note.com/nao_mojiokoshi/n/n6470413d4241" target="_blank" rel="noopener noreferrer">note の無料記事：手順書で抜けやすい3つ →</a>
+  </section>
+
+  <footer class="site-footer no-print">
+    <div class="container">
+      <p>※このページは、メモの行を決まったルールで並べかえて点検するだけの道具です。手順の中身が正しいかは確かめられないので、最後は実際に操作して確かめてください。入力した内容は外へ送らず、保存もしません。</p>
+      <nav aria-label="ほかの無料ツール">
+        <span>ほかの無料ツール：</span>
+        <a href="/tejunsho/">スクショ手順書メーカー</a>
+        <a href="/kansu/">関数＆エラー3秒レシピ</a>
+        <a href="/ai-check/">AIっぽさ診断</a>
+        <a href="/prompt-studio/">AI画像の指示文メーカー</a>
+        <a href="/hyoki/">表記ゆれお直し</a>
+      </nav>
+    </div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
