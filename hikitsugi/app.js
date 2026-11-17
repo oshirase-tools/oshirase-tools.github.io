@@ -328,7 +328,7 @@
 
     if (!$('memo').value.trim()) {
       loadSample('keiri');
-      $('status').textContent = '見本が入っています。作業の名前・時間・聞く相手・メモを、すべて自分の作業に書きかえてください。';
+      $('status').textContent = '見本が入っています。作業の名前・作った人・時間・聞く相手・メモを、すべて自分の作業に書きかえてください。';
     } else {
       edited = true;
       render();
