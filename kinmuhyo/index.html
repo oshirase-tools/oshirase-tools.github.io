@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>グループホームの勤務表を無料で自動作成｜夜勤・明け・希望休に対応</title>
+<meta name="description" content="グループホーム・小さな介護施設の1か月の勤務表を無料で自動作成。ユニットごとの夜勤、夜勤→明け→休みの並び、夜勤回数の公平さ、新人だけの夜勤を避ける、希望休、前の月からの続き、勤務時間の合計に対応。名前はこのパソコンの中だけに保存し、外へ送りません。">
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--ink:#222;--sub:#666;--line:#ddd;--accent:#2b6cb0;--warn:#c53030;--ok:#2f855a;
+--c-early:#fefcbf;--c-day:#e6fffa;--c-late:#feebc8;--c-night:#c3dafe;--c-ake:#e9d8fd;--c-wish:#fed7d7;--c-paid:#c6f6d5;--c-train:#edf2f7}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+header{background:#fff;border-bottom:1px solid var(--line);padding:16px}
+header h1{margin:0;font-size:1.3rem}
+header p{margin:4px 0 0;color:var(--sub);font-size:.9rem}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+h2{font-size:1.05rem;margin:0 0 12px}
+label{font-size:.9rem}
+input[type=number]{width:4.5em}
+input[type=text]{width:100%}
+button{font:inherit;padding:8px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.sub{background:#fff;color:var(--accent)}
+button.danger{background:#fff;color:var(--warn);border-color:var(--warn)}
+.row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:.85rem}
+th,td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap}
+th small{font-weight:normal;color:var(--sub)}
+#staffTable td input[type=text]{min-width:7em}
+#staffTable td input.wish{min-width:9em}
+.note{color:var(--sub);font-size:.85rem}
+.warn{color:var(--warn)}
+.ok{color:var(--ok)}
+.bad{border:2px solid var(--warn)}
+.caution{border-left:4px solid #d69e2e;background:#fffaf0;padding:8px 12px;font-size:.85rem;margin:0 0 16px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.steps div{border:1px solid var(--line);border-radius:6px;padding:10px;font-size:.9rem}
+.steps b{color:var(--accent)}
+#result td.s-早{background:var(--c-early)}#result td.s-日{background:var(--c-day)}#result td.s-遅{background:var(--c-late)}
+#result td.s-夜{background:var(--c-night);font-weight:bold}#result td.s-明{background:var(--c-ake)}#result td.s-希{background:var(--c-wish)}
+#result td.s-有{background:var(--c-paid)}#result td.s-研{background:var(--c-train)}
+#result td.short{background:#feb2b2;color:#742a2a;font-weight:bold}
+#result th.sat{color:#2b6cb0}#result th.sun{color:#c53030}
+#result td.name{text-align:left;position:sticky;left:0;background:#fff}
+#result td.cell{cursor:pointer}
+ul.warns{margin:8px 0 0;padding-left:1.2em}
+.legend span{display:inline-block;padding:0 8px;margin:0 6px 4px 0;border:1px solid var(--line);border-radius:4px;font-size:.85rem}
+footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8rem}
+@media print{header,section.input,footer,.noprint{display:none!important}body{background:#fff}section{border:none;padding:0}table{font-size:9px}}
+</style>
+</head>
+<body>
+<header>
+<h1>グループホームの勤務表を、無料で自動作成</h1>
+<p><b>Excel 不要・登録不要・印刷と CSV 出力に対応。</b></p>
+<p>職員と希望休を入れて、ボタンを押すだけで1か月分の勤務表ができます。入力した名前などの内容は、このパソコンのブラウザの中だけに保存され、外には送りません。</p>
+</header>
+<main>
+
+<div class="caution">この道具は、人員の基準や労働基準法に合っているかを<b>判定しません</b>。「入れた条件を守れたか」を知らせるだけです。役所に出す前に、事業所で確かめてください。<br>
+2交代（16時間夜勤）の事業所向けです。3交代（準夜・深夜）や宿直の事業所には向きません。</div>
+
+<section class="input">
+<h2>使い方は3つだけ</h2>
+<div class="steps">
+<div><b>1.</b> 月・ユニットの数・毎日いる人数（早番・日勤・遅番）を入れる</div>
+<div><b>2.</b> 職員と希望休を入れる（はじめは「見本の職員を入れる」で試せます）</div>
+<div><b>3.</b> 「勤務表を自動で作る」を押す。気になる所はセルを押して直す</div>
+</div>
+<p class="note" style="margin:8px 0 0">有給は、作ったあとにセルを押して「有」にします。</p>
+<p class="note" style="margin-top:10px">この道具でできること：<b>①ユニットごとに夜勤を1人入れる</b>　<b>②夜勤の回数を人ごとにそろえる</b>　<b>③新人だけの夜勤を避ける</b>　<b>④前の月の終わりから続けて作れる（「次の月へ引き継ぐ」ボタン）</b>　<b>⑤1人ずつの勤務時間の合計を出す</b></p>
+</section>
+
+<section class="input">
+<h2>1. 月・ユニット・毎日いる人数</h2>
+<div class="row">
+<label>年 <input type="number" id="year" min="2024" max="2035"></label>
+<label>月 <input type="number" id="month" min="1" max="12"></label>
+<label>ユニットの数 <input type="number" id="units" min="1" max="3"></label>
+</div>
+<div class="row" style="margin-top:8px">
+<span class="note">日中に毎日いる人数（ユニットを合わせた全体）：</span>
+<label>早番 <input type="number" id="needE" min="0" max="9"> 人</label>
+<label>日勤 <input type="number" id="needD" min="0" max="9"> 人</label>
+<label>遅番 <input type="number" id="needL" min="0" max="9"> 人</label>
+</div>
+<div class="row" style="margin-top:8px">
+<span class="note">1回の勤務時間（合計の計算に使います）：</span>
+<label>早番 <input type="number" id="hE" min="0" max="24" step="0.5"> 時間</label>
+<label>日勤 <input type="number" id="hD" min="0" max="24" step="0.5"> 時間</label>
+<label>遅番 <input type="number" id="hL" min="0" max="24" step="0.5"> 時間</label>
+<label>夜勤 <input type="number" id="hN" min="0" max="24" step="0.5"> 時間</label>
+</div>
+<div class="row" style="margin-top:8px">
+<label>連続で働ける日数の上限 <input type="number" id="maxRun" min="2" max="10"> 日</label>
+<label><input type="checkbox" id="ruleNewbie"> 新人には夜勤を入れない</label>
+<label><input type="checkbox" id="ruleCert"> 日中に介護福祉士か看護師を毎日1人以上（事業所の決まり）</label>
+</div>
+<p class="note">夜勤は、ユニットごとに毎晩1人入れます（2ユニットなら毎晩2人）。夜勤の次の日は「明け」、その次の日は「休み」になります。夜勤を2回続けることはありません。<br>
+グループホームの夜勤は1ユニット1人のことが多いので、「新人には夜勤を入れない」を選ぶと、新人だけの夜勤になりません。<br>
+日中の人数は全体で数えます。ユニットごとの日中の配置や常勤換算は計算しません。</p>
+</section>
+
+<section class="input">
+<h2>2. 職員</h2>
+<ul class="note" style="margin:0 0 8px;padding-left:1.2em">
+<li><b>ユニット</b>：夜勤に入るユニット。どちらにも入れる人は「共通」</li>
+<li><b>公休数</b>：常勤の人の、その月の休みの日数（例：9）。夜勤明けと有給は休みに数えません</li>
+<li><b>希望休</b>：日にちをカンマで（例：3,10,17）。「3日」「20〜22」の書き方もできます</li>
+<li><b>入れる曜日</b>（パート）：例：月水金・月〜金・平日・毎日</li>
+<li><b>前月の終わり</b>：前の月の最後の数日の勤務を、古い順に書きます（例：日夜明）。最後が「夜」なら1日は明け・2日は休み、「夜明」なら1日は休みになり、続けて働いた日数も数えます。「次の月へ引き継ぐ」を押すと自動で入ります</li>
+</ul>
+<div class="scroll">
+<table id="staffTable">
+<thead><tr>
+<th>名前</th><th>常勤/<br>パート</th><th>ユニット</th><th>資格</th><th>新人</th><th>夜勤<br>できる</th><th>夜勤<br>最少</th><th>夜勤<br>最多</th><th>公休数<br><small>常勤</small></th><th>入れる曜日<br><small>パート</small></th><th>月の上限<br>日数 <small>パート</small></th><th>希望休</th><th>前月の終わり<br><small>例：日夜明</small></th><th></th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="row" style="margin-top:10px">
+<button class="sub" id="addStaff">職員を1人足す</button>
+<button class="sub" id="sample">見本の職員を入れる（1ユニット）</button>
+<button class="sub" id="sample2">見本の職員を入れる（2ユニット）</button>
+<button class="danger" id="clearAll">この道具の中身を全部消す</button>
+</div>
+</section>
+
+<section class="input">
+<h2>3. 作る</h2>
+<div class="row">
+<button id="make">勤務表を自動で作る</button>
+<span class="note">何千通りも試して、条件を一番よく守れた物を出します。もう一度押すと、別の組み方を出します。</span>
+</div>
+<p id="staffChanged" class="warn" style="display:none">職員の一覧が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。</p>
+</section>
+
+<section id="out" style="display:none">
+<h2 id="outTitle">勤務表</h2>
+<div class="legend"><span style="background:var(--c-early)">早 早番</span><span style="background:var(--c-day)">日 日勤</span><span style="background:var(--c-late)">遅 遅番</span><span style="background:var(--c-night)">夜 夜勤</span><span style="background:var(--c-ake)">明 明け</span><span>休 公休</span><span style="background:var(--c-wish)">希 希望休</span><span style="background:var(--c-paid)">有 有給</span><span style="background:var(--c-train)">研 研修</span></div>
+<p class="note noprint">セルを押すと、勤務を手で入れかえられます（早→日→遅→夜→明→休→希→有→研 の順）。入れかえると、下の数と注意が作り直されます。夜勤の行の「U1」などは、その人が入ったユニットです。2ユニット以上で「共通」の人は、夜(U1)→夜(U2)→明 の順に変わります。</p>
+<div class="scroll"><table id="result"></table></div>
+<div id="checks"></div>
+<div class="row noprint" style="margin-top:10px">
+<button class="sub" id="csv">CSV で保存（Excel で開けます）</button>
+<button class="sub" id="print">印刷する</button>
+<button id="nextMonth">次の月へ引き継ぐ</button>
+</div>
+<p class="note">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。</p>
+</section>
+
+</main>
+<footer>入力した名前や希望休は、このパソコンのブラウザの中（localStorage）にだけ保存されます。サーバーには送りません。共用のパソコンで使ったあとは「この道具の中身を全部消す」を押してください。</footer>
+
+<script>
+'use strict';
+const STORE='kinmuhyo-gh-v3';
+const CODES=['早','日','遅','夜','明','休','希','有','研'];
+const WORK=new Set(['早','日','遅','夜','明','研']);
+const KOUKYU=new Set(['休','希']);
+const WD='日月火水木金土';
+const WEEK='月火水木金土日';
+const $=id=>document.getElementById(id);
+const SETKEYS=['year','month','units','needE','needD','needL','hE','hD','hL','hN','maxRun'];
+
+function defaultState(){
+  const d=new Date(); d.setMonth(d.getMonth()+1);
+  return {year:d.getFullYear(),month:d.getMonth()+1,units:1,needE:1,needD:1,needL:1,hE:8,hD:8,hL:8,hN:16,maxRun:5,ruleNewbie:true,ruleCert:false,staff:[],result:null};
+}
+function newStaff(o){return Object.assign({name:'',type:'常勤',unit:'1',cert:'なし',newbie:false,night:true,nMin:3,nMax:5,off:9,days:'月火水木金',cap:12,wish:'',prev:''},o||{});}
+function sanitize(s){
+  const d=defaultState();
+  if(!s||typeof s!=='object') return d;
+  const out=Object.assign(d,s);
+  out.staff=Array.isArray(s.staff)?s.staff.filter(x=>x&&typeof x==='object').map(x=>newStaff(x)):[];
+  out.staff.forEach(x=>{ if(!['常勤','パート'].includes(x.type)) x.type='常勤'; if(!['1','2','3','共通'].includes(String(x.unit))) x.unit='1'; x.unit=String(x.unit); if(!['なし','介護福祉士','看護師'].includes(x.cert)) x.cert='なし'; x.name=String(x.name||''); x.wish=String(x.wish||''); x.days=String(x.days||''); x.prev=String(x.prev||''); });
+  out.staff.forEach(x=>{ x.newbie=x.newbie===true; x.night=x.night!==false; x.nMin=num(x.nMin,0,15,0); x.nMax=num(x.nMax,0,15,0); x.off=num(x.off,0,20,9); x.cap=num(x.cap,0,31,12); });
+  // 設定値は範囲に収める（壊れた値・文字でも止まらない）
+  out.year=num(out.year,2000,2100,d.year); out.month=num(out.month,1,12,d.month); out.units=num(out.units,1,3,1);
+  out.needE=num(out.needE,0,9,1); out.needD=num(out.needD,0,9,1); out.needL=num(out.needL,0,9,1);
+  out.hE=hoursVal(out.hE,8); out.hD=hoursVal(out.hD,8); out.hL=hoursVal(out.hL,8); out.hN=hoursVal(out.hN,16);
+  out.maxRun=num(out.maxRun,2,10,5);
+  out.ruleNewbie=typeof out.ruleNewbie==='boolean'?out.ruleNewbie:true; out.ruleCert=out.ruleCert===true;
+  if(!resultShapeOk(out.result)) out.result=null;
+  return out;
+}
+function resultShapeOk(r){
+  if(!(r&&typeof r==='object')) return false;
+  if(!Number.isInteger(r.year)||!Number.isInteger(r.month)||!Number.isInteger(r.units)||r.units<1||r.units>3) return false;
+  if(!(Array.isArray(r.grid)&&r.grid.every(row=>Array.isArray(row)&&row.every(c=>CODES.includes(c))))) return false;
+  // nu は grid と同じ形で、値は 0〜ユニット数 の整数
+  if(!(Array.isArray(r.nu)&&r.nu.length===r.grid.length)) return false;
+  return r.nu.every((row,i)=>Array.isArray(row)&&row.length===r.grid[i].length&&row.every(v=>Number.isInteger(v)&&v>=0&&v<=r.units));
+}
+let state=load();
+function load(){ try{ return sanitize(JSON.parse(localStorage.getItem(STORE))); }catch(e){ return defaultState(); } }
+let saveWarned=false;
+function save(){ try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){ if(!saveWarned){ saveWarned=true; const f=document.querySelector('footer'); if(f) f.insertAdjacentHTML('afterbegin','<p class="warn"><b>このブラウザでは保存ができません（シークレットウィンドウなど）。</b>閉じると入力が消えます。CSV で保存してください。</p>'); } } }
+
+function renderSettings(){
+  SETKEYS.forEach(k=>$(k).value=state[k]);
+  $('ruleNewbie').checked=state.ruleNewbie; $('ruleCert').checked=state.ruleCert;
+}
+function num(v,lo,hi,def){ v=parseInt(String(v).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)),10); if(isNaN(v)) v=def; return Math.min(hi,Math.max(lo,v)); }
+// 勤務時間用：小数（0.5 刻み）・全角数字も受ける。0〜24 に収める
+function hoursVal(v,def){
+  const t=String(v==null?'':v).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[．。]/g,'.').trim();
+  let x=/^\d+(\.\d+)?$|^\.\d+$/.test(t)?parseFloat(t):NaN;
+  if(isNaN(x)) x=(typeof def==='number'&&isFinite(def))?def:8;
+  x=Math.round(x*2)/2;
+  return Math.min(24,Math.max(0,x));
+}
+function readSettings(){
+  state.year=num($('year').value,2000,2100,state.year);
+  state.month=num($('month').value,1,12,state.month);
+  state.units=num($('units').value,1,3,1);
+  state.needE=num($('needE').value,0,9,0); state.needD=num($('needD').value,0,9,0); state.needL=num($('needL').value,0,9,0);
+  state.hE=hoursVal($('hE').value,state.hE); state.hD=hoursVal($('hD').value,state.hD); state.hL=hoursVal($('hL').value,state.hL); state.hN=hoursVal($('hN').value,state.hN);
+  state.maxRun=num($('maxRun').value,2,10,5);
+  state.ruleNewbie=$('ruleNewbie').checked; state.ruleCert=$('ruleCert').checked;
+  renderSettings();
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function staffChanged(){
+  if(state.result){ state.result=null; $('staffChanged').textContent='職員の一覧が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; }
+  save(); renderStaff(); renderResult();
+}
+function opt(v,cur){return `<option${String(v)===String(cur)?' selected':''}>${v}</option>`;}
+function renderStaff(){
+  const tb=document.querySelector('#staffTable tbody'); tb.innerHTML='';
+  state.staff.forEach((s,i)=>{
+    const tr=document.createElement('tr');
+    const units=['1','2','3'].slice(0,Math.max(1,state.units)).concat(['共通']);
+    if(!units.includes(s.unit)) units.unshift(s.unit);
+    tr.innerHTML=`<td><input type="text" data-k="name" value="${esc(s.name)}" placeholder="例：山田" maxlength="20"></td>
+<td><select data-k="type">${opt('常勤',s.type)}${opt('パート',s.type)}</select></td>
+<td><select data-k="unit">${units.map(u=>opt(u,s.unit)).join('')}</select></td>
+<td><select data-k="cert">${opt('なし',s.cert)}${opt('介護福祉士',s.cert)}${opt('看護師',s.cert)}</select></td>
+<td><input type="checkbox" data-k="newbie"${s.newbie?' checked':''}></td>
+<td><input type="checkbox" data-k="night"${s.night?' checked':''}></td>
+<td><input type="number" data-k="nMin" min="0" max="15" value="${s.nMin}"></td>
+<td><input type="number" data-k="nMax" min="0" max="15" value="${s.nMax}"></td>
+<td><input type="number" data-k="off" min="0" max="20" value="${s.off}"></td>
+<td><input type="text" data-k="days" value="${esc(s.days)}" style="width:6em"></td>
+<td><input type="number" data-k="cap" min="0" max="31" value="${s.cap}"></td>
+<td><input type="text" class="wish" data-k="wish" value="${esc(s.wish)}" placeholder="3,10,17"></td>
+<td><input type="text" data-k="prev" value="${esc(s.prev)}" style="width:6em" maxlength="10"></td>
+<td><button class="danger" data-del="${i}">消す</button></td>`;
+    tr.querySelectorAll('[data-k]').forEach(el=>{
+      el.addEventListener('change',()=>{
+        const k=el.dataset.k;
+        if(el.type==='checkbox') s[k]=el.checked;
+        else if(el.type==='number'){ const hi={nMin:15,nMax:15,off:20,cap:31}[k]||31; s[k]=String(el.value).trim()===''?s[k]:num(el.value,0,hi,s[k]); el.value=s[k]; }
+        else s[k]=el.value;
+        if(k==='type' && s.type==='パート'){ s.night=false; s.nMin=0; s.nMax=0; }
+        if(k==='newbie' && s.newbie){ s.nMin=0; }
+        save();
+        if(k==='type'||k==='newbie') renderStaff(); else markBad(tr,s);
+        if(k==='unit'&&state.result){ state.result=null; $('staffChanged').style.display=''; save(); }
+        renderResult();
+      });
+    });
+    markBad(tr,s);
+    tr.querySelector('[data-del]').addEventListener('click',()=>{ if(confirm((s.name||'この職員')+' を消しますか？')){state.staff.splice(i,1);staffChanged();} });
+    tb.appendChild(tr);
+  });
+}
+function markBad(tr,s){
+  const nd=new Date(state.year,state.month,0).getDate();
+  const set=(k,bad,msg)=>{ const el=tr.querySelector(`[data-k="${k}"]`); if(!el) return; el.classList.toggle('bad',!!bad); el.title=bad?msg:''; };
+  const wp=parseWish(s.wish,nd), dpf=parseDaysFull(s.days);
+  set('wish',wp.bad.length,'読めなかった：'+wp.bad.join(' '));
+  set('days',s.type==='パート'&&(dpf.set.size===0||dpf.bad),'曜日が読めません（例：月水金・月〜金・平日・毎日）');
+  set('prev',parsePrev(s.prev).bad,'早日遅夜明休有研 の字で書いてください');
+  set('nMin',s.nMin>s.nMax,'最少が最多より大きいです');
+}
+function toHalf(t){return String(t).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));}
+function parseWish(str,nd){
+  const set=new Set(), bad=[];
+  toHalf(str||'').replace(/[，、\s・]/g,',').replace(/[〜～~ー－–—]/g,'-').split(',').forEach(raw=>{
+    const t=raw.replace(/日/g,'').trim(); if(!t) return;
+    const m=t.match(/^(\d{1,2})(?:-(\d{1,2}))?$/);
+    if(!m){bad.push(raw.trim());return;}
+    const a=+m[1], b=m[2]?+m[2]:a;
+    if(a<1||b<1||a>nd||b>nd){bad.push(raw.trim());return;}
+    for(let d=Math.min(a,b);d<=Math.max(a,b);d++) set.add(d-1);
+  });
+  return {set,bad};
+}
+function parseDaysFull(str){
+  let t=String(str||'').replace(/\s|曜日|曜|、|，|,|・/g,'').replace(/毎日|全日|全部/g,WEEK).replace(/平日/g,'月火水木金').replace(/[〜～~ー－–—]/g,'-');
+  const set=new Set(); let bad=false;
+  t=t.replace(/([月火水木金土日])-([月火水木金土日])/g,(m,a,b)=>{ let i=WEEK.indexOf(a); const j=WEEK.indexOf(b); for(let k=0;k<7;k++){ set.add(WEEK[i]); if(i===j) break; i=(i+1)%7; } return ''; });
+  t.split('').forEach(c=>{ if(WEEK.includes(c)) set.add(c); else bad=true; });
+  return {set,bad};
+}
+function parsePrev(str){
+  const t=String(str||'').replace(/\s/g,'').split('').map(c=>c==='希'?'休':c);
+  const bad=t.some(c=>!CODES.includes(c));
+  const codes=t.filter(c=>CODES.includes(c));
+  let run=0; for(let k=codes.length-1;k>=0;k--){ if(WORK.has(codes[k])) run++; else break; }
+  const last=codes[codes.length-1]||'', last2=codes[codes.length-2]||'';
+  return {bad,run,lastNight:last==='夜',ake:last==='明'&&last2==='夜',codes};
+}
+function unitsOf(s,cfg){ return s.unit==='共通'?Array.from({length:cfg.units},(_,k)=>k+1):[Math.min(cfg.units,+s.unit||1)]; }
+
+/* ---------- 自動作成 ---------- */
+function build(cfg,staff,rnd){
+  const nd=cfg.nd, n=staff.length;
+  const g=staff.map(()=>Array(nd).fill(''));
+  const nu=staff.map(()=>Array(nd).fill(0));
+  staff.forEach((s,i)=>{
+    s._wish.forEach(d=>{ g[i][d]='希'; });
+    const p=s._prev;
+    if(p.lastNight){ if(nd>0) g[i][0]='明'; if(nd>1&&g[i][1]==='') g[i][1]='休'; }
+    else if(p.ake){ if(nd>0&&g[i][0]==='') g[i][0]='休'; }
+  });
+  const nightCnt=Array(n).fill(0);
+  const workOf=i=>g[i].filter(c=>WORK.has(c)).length;
+  function runBefore(i,d){ let r=0; for(let k=d-1;k>=0;k--){ if(WORK.has(g[i][k])) r++; else return r; } return r+staff[i]._prev.run; }
+  function runAfter(i,d){ let r=0; for(let k=d+1;k<nd;k++){ if(WORK.has(g[i][k])) r++; else break; } return r; }
+  function canWork(i,d,len){
+    for(let k=d;k<d+len&&k<nd;k++) if(g[i][k]!=='') return false;
+    return runBefore(i,d)+len+runAfter(i,Math.min(nd-1,d+len-1))<=cfg.maxRun;
+  }
+  const target=staff.map(s=>s.type==='常勤'?Math.max(0,nd-s.off):Math.min(s.cap,nd));
+  // 1) 夜勤：ユニットごとに1人
+  for(let d=0;d<nd;d++){
+    const uOrder=Array.from({length:cfg.units},(_,k)=>k+1);
+    // 入れる人が少ないユニットから
+    uOrder.sort((a,b)=>staff.filter(s=>s.unit===String(a)).length-staff.filter(s=>s.unit===String(b)).length);
+    for(const u of uOrder){
+      const cand=[];
+      staff.forEach((s,i)=>{
+        if(!s.night || nightCnt[i]>=s.nMax) return;
+        if(!s._units.includes(u)) return;
+        if(cfg.ruleNewbie && s.newbie) return;
+        if(!canWork(i,d,Math.min(2,nd-d))) return;
+        if(d+2<nd && g[i][d+2]!=='' && !KOUKYU.has(g[i][d+2])) return;
+        if(s.type==='パート'){ if(!s._days.has(cfg.wd(d))) return; if(workOf(i)+Math.min(2,nd-d)>s.cap) return; }
+        cand.push(i);
+      });
+      if(!cand.length) continue;
+      const key=i=>(nightCnt[i]-staff[i].nMin)*2+(staff[i].unit==='共通'?1:0);
+      cand.sort((a,b)=>key(a)-key(b));
+      const top=cand.filter(i=>key(i)===key(cand[0]));
+      const i=top[Math.floor(rnd()*top.length)];
+      g[i][d]='夜'; nu[i][d]=u; nightCnt[i]++;
+      if(d+1<nd) g[i][d+1]='明';
+      if(d+2<nd && g[i][d+2]==='') g[i][d+2]='休';
+    }
+  }
+  // 2) 日中
+  for(let d=0;d<nd;d++){
+    const slots=[];
+    for(let k=0;k<cfg.needE;k++) slots.push('早');
+    for(let k=0;k<cfg.needD;k++) slots.push('日');
+    for(let k=0;k<cfg.needL;k++) slots.push('遅');
+    let haveCert=false;
+    for(const code of slots){
+      let cand=[];
+      staff.forEach((s,i)=>{
+        if(g[i][d]!=='') return;
+        if(s.type==='パート' && !s._days.has(cfg.wd(d))) return;
+        if(workOf(i)>=target[i]) return;
+        if(!canWork(i,d,1)) return;
+        if(code==='早' && d>0 && g[i][d-1]==='遅') return;
+        if(code==='早' && d===0 && s._prev.codes.slice(-1)[0]==='遅') return;
+        cand.push(i);
+      });
+      if(!cand.length) continue;
+      if(cfg.ruleCert && !haveCert){ const c=cand.filter(i=>staff[i].cert!=='なし'); if(c.length) cand=c; }
+      cand.sort((a,b)=>((target[b]-workOf(b))-(target[a]-workOf(a)))||(rnd()-0.5));
+      const top=cand.slice(0,Math.min(3,cand.length));
+      const i=top[Math.floor(rnd()*top.length)];
+      g[i][d]=code; if(staff[i].cert!=='なし') haveCert=true;
+    }
+  }
+  // 3) 常勤の勤務日が足りない人に日勤を足す
+  staff.forEach((s,i)=>{
+    if(s.type!=='常勤') return;
+    let need=target[i]-workOf(i);
+    const days=[]; for(let d=0;d<nd;d++) days.push(d);
+    days.sort(()=>rnd()-0.5);
+    for(const d of days){ if(need<=0) break; if(g[i][d]==='' && canWork(i,d,1)){ g[i][d]='日'; need--; } }
+  });
+  for(let i=0;i<n;i++) for(let d=0;d<nd;d++) if(g[i][d]==='') g[i][d]='休';
+  return {g,nu};
+}
+
+function nightUnit(cfg,staff,res,i,d){ const u=res.nu[i]&&res.nu[i][d]; return u||staff[i]._units[0]; }
+function evaluate(cfg,staff,res){
+  const g=res.g, nd=cfg.nd, warns=[], infos=[]; let pen=0;
+  const cap=staff.reduce((a,s)=>a+(s.night&&!(cfg.ruleNewbie&&s.newbie)?s.nMax:0),0);
+  if(cap<cfg.units*nd) warns.push(`夜勤できる回数の合計（「夜勤 最多」の合計 ${cap}回）が、1か月の夜勤 ${cfg.units*nd}回（ユニット${cfg.units}×${nd}日）に足りません。夜勤できる人か「夜勤 最多」を増やしてください`);
+  if(cfg.units>1){
+    for(let u=1;u<=cfg.units;u++){
+      const capU=staff.reduce((a,s)=>a+(s.night&&!(cfg.ruleNewbie&&s.newbie)&&s._units.includes(u)?s.nMax:0),0);
+      if(capU<nd) warns.push(`ユニット${u}に入れる人（ユニット${u}の人と「共通」の人）の「夜勤 最多」の合計 ${capU}回が、ユニット${u}の1か月の夜勤 ${nd}回に足りません（「共通」の人は、どのユニットにも重ねて数えています）。ユニット${u}の人か「夜勤 最多」を増やしてください`);
+    }
+  }
+  const nightShort=Array.from({length:cfg.units+1},()=>[]);
+  const nightShortAt=warns.length;
+  const dayCnt=[];
+  for(let d=0;d<nd;d++){
+    const c={早:0,日:0,遅:0,夜:0,cert:0,newbieNight:0,perU:Array(cfg.units+1).fill(0)};
+    staff.forEach((s,i)=>{const x=g[i][d]; if(c[x]!==undefined) c[x]++; if(['早','日','遅'].includes(x)&&s.cert!=='なし') c.cert++; if(x==='夜'){ c.perU[nightUnit(cfg,staff,res,i,d)]++; if(s.newbie) c.newbieNight++; }});
+    dayCnt.push(c);
+    const lack=[];
+    if(c.早<cfg.needE) lack.push('早番'+(cfg.needE-c.早)+'人');
+    if(c.日<cfg.needD) lack.push('日勤'+(cfg.needD-c.日)+'人');
+    if(c.遅<cfg.needL) lack.push('遅番'+(cfg.needL-c.遅)+'人');
+    if(lack.length){ pen+=lack.length*1000; warns.push(`${d+1}日：${lack.join('・')} が足りません`); }
+    for(let u=1;u<=cfg.units;u++) if(c.perU[u]<1){ pen+=1000; nightShort[u].push(d+1); }
+    for(let u=1;u<=cfg.units;u++) if(c.perU[u]>1){ pen+=300; warns.push(`${d+1}日：${cfg.units>1?'ユニット'+u+'の':''}夜勤が ${c.perU[u]}人です`); }
+    if(cfg.ruleNewbie && c.newbieNight>0){ pen+=800; warns.push(`${d+1}日：新人が夜勤に入っています`); }
+    if(cfg.ruleCert && (c.早+c.日+c.遅)>0 && c.cert===0){ pen+=300; warns.push(`${d+1}日：日中に介護福祉士・看護師がいません（事業所の決まり）`); }
+  }
+  // 夜勤の不足はユニットごとに1行にまとめ、日ごとの注意より前に出す
+  const nsLines=[]; for(let u=1;u<=cfg.units;u++) if(nightShort[u].length) nsLines.push(`${cfg.units>1?'ユニット'+u+'の':''}夜勤が足りない日：${nightShort[u].join(',')}日`);
+  warns.splice(nightShortAt,0,...nsLines);
+  const hours={早:cfg.hE,日:cfg.hD,遅:cfg.hL,夜:cfg.hN,研:cfg.hD};
+  const per=staff.map((s,i)=>{
+    const row=g[i]; let night=0,work=0,off=0,paid=0,hrs=0,run=s._prev.run,maxRun=run,lateEarly=0,ngNight=0,ngAke=0;
+    const prevLast=s._prev.codes.slice(-1)[0];
+    for(let d=0;d<nd;d++){
+      const x=row[d];
+      hrs+=hours[x]||0;
+      if(x==='夜'){night++; if(d+1<nd&&row[d+1]!=='明') ngAke++; if(d+2<nd&&WORK.has(row[d+2])) ngAke++; if((d>0&&row[d-1]==='夜')||(d===0&&prevLast==='夜')) ngNight++;}
+      if(WORK.has(x)){work++;run++;maxRun=Math.max(maxRun,run);} else {run=0; if(KOUKYU.has(x)) off++; if(x==='有') paid++;}
+      if(x==='早'&&((d>0&&row[d-1]==='遅')||(d===0&&prevLast==='遅'))) lateEarly++;
+    }
+    if(s._prev.lastNight){ if(nd>0&&row[0]!=='明') ngAke++; if(nd>1&&WORK.has(row[1])) ngAke++; }
+    if(s._prev.ake && nd>0 && WORK.has(row[0])) ngAke++;
+    return {night,work,off,paid,hrs,maxRun,lateEarly,ngNight,ngAke};
+  });
+  staff.forEach((s,i)=>{
+    const p=per[i], nm=s.name||('職員'+(i+1));
+    if(s._wishBad.length) warns.push(`${nm}：希望休の「${s._wishBad.join('、')}」が読めませんでした（例：3,10,20-22）`);
+    if(s._prev.bad) warns.push(`${nm}：「前月の終わり」に、早日遅夜明休有研 以外の字があります`);
+    if(s.type==='パート' && (s._days.size===0||s._daysBad)) warns.push(`${nm}：「入れる曜日」に読めない所があります（例：月水金・月〜金・平日・毎日）`);
+    if(s.nMin>s.nMax) warns.push(`${nm}：夜勤の最少 ${s.nMin}回が、最多 ${s.nMax}回より大きくなっています`);
+    if(s.unit!=='共通' && +s.unit>cfg.units) warns.push(`${nm}：ユニット${s.unit} は、今のユニットの数（${cfg.units}）にありません`);
+    if(p.maxRun>cfg.maxRun){pen+=500;warns.push(`${nm}：${p.maxRun}日続けて勤務になっています（上限 ${cfg.maxRun}日。前の月からの続きもふくむ）`);}
+    const noNight=cfg.ruleNewbie&&s.newbie;
+    if(s.night && !noNight && p.night<s.nMin){pen+=200*(s.nMin-p.night);warns.push(`${nm}：夜勤が ${p.night}回で、最少 ${s.nMin}回に足りません`);}
+    if(p.night>s.nMax){pen+=300;warns.push(`${nm}：夜勤が ${p.night}回で、最多 ${s.nMax}回をこえています`);}
+    if(!s.night && p.night>0){pen+=1000;warns.push(`${nm}：夜勤できない人に夜勤が入っています`);}
+    if(s.type==='常勤' && p.off!==s.off){pen+=150*Math.abs(p.off-s.off);warns.push(`${nm}：公休が ${p.off}日で、公休数 ${s.off}日と合いません`);}
+    if(s.type==='パート' && p.work>s.cap){pen+=300;warns.push(`${nm}：${p.work}日勤務で、上限 ${s.cap}日をこえています`);}
+    if(p.lateEarly){pen+=50*p.lateEarly;warns.push(`${nm}：遅番の次の日に早番が ${p.lateEarly}回あります`);}
+    if(p.ngNight){pen+=1000;warns.push(`${nm}：夜勤が2日続いています`);}
+    if(p.ngAke){pen+=800;warns.push(`${nm}：夜勤のあとが「明け→休み」になっていない所があります（前の月からの続きもふくむ）`);}
+    s._wish.forEach(d=>{
+      if(g[i][d]!=='希'){
+        if(d===0&&s._prev.lastNight) infos.push(`${nm}：1日の希望休は、前の月の夜勤の「明け」と重なっているので、明けにしました`);
+        else if(g[i][d]!=='有') {pen+=600;warns.push(`${nm}：${d+1}日の希望休が守れていません`);}
+      }
+    });
+  });
+  const np=staff.map((s,i)=>(s.night&&!(cfg.ruleNewbie&&s.newbie))?per[i].night-s.nMin:null).filter(v=>v!==null);
+  if(np.length>1) pen+=(Math.max(...np)-Math.min(...np))*40;
+  return {pen,warns,infos,per,dayCnt};
+}
+
+function seeded(seed){ let t=seed>>>0; return ()=>{ t+=0x6D2B79F5; let r=Math.imul(t^t>>>15,1|t); r^=r+Math.imul(r^r>>>7,61|r); return ((r^r>>>14)>>>0)/4294967296; }; }
+function makeCfg(){
+  const y=state.year, m=state.month, nd=new Date(y,m,0).getDate(), first=new Date(y,m-1,1).getDay();
+  return {nd,units:Math.max(1,state.units),needE:state.needE,needD:state.needD,needL:state.needL,hE:state.hE,hD:state.hD,hL:state.hL,hN:state.hN,maxRun:Math.max(2,state.maxRun),ruleNewbie:state.ruleNewbie,ruleCert:state.ruleCert,wd:d=>WD[(first+d)%7]};
+}
+function prepStaff(cfg){
+  return state.staff.map(s=>{ const w=parseWish(s.wish,cfg.nd), df=parseDaysFull(s.days); const o=Object.assign({},s,{_wish:w.set,_wishBad:w.bad,_days:df.set,_daysBad:df.bad,_prev:parsePrev(s.prev)}); o._units=unitsOf(o,cfg); return o; });
+}
+
+function run(){
+  readSettings(); save();
+  if(!state.staff.length){alert('職員を1人以上入れてください');return;}
+  const cfg=makeCfg(), staff=prepStaff(cfg);
+  const base=(Date.now()^Math.floor(Math.random()*1e9))>>>0;
+  let best=null; const t0=performance.now();
+  for(let k=0;k<4000;k++){
+    const res=build(cfg,staff,seeded(base+k*7919));
+    const ev=evaluate(cfg,staff,res);
+    if(!best||ev.pen<best.ev.pen) best={res,ev};
+    if(best.ev.pen===0 || (best.ev.warns.length===0 && best.ev.pen<=40 && k>300) || performance.now()-t0>2500) break;
+  }
+  state.result={year:state.year,month:state.month,units:cfg.units,grid:best.res.g,nu:best.res.nu};
+  $('staffChanged').style.display='none';
+  save(); renderResult();
+}
+
+function resultOk(){
+  const r=state.result; if(!r) return false;
+  const nd=new Date(state.year,state.month,0).getDate();
+  return r.year===state.year && r.month===state.month && r.units===Math.max(1,state.units) && r.grid.length===state.staff.length && r.grid.every(row=>row.length===nd) && Array.isArray(r.nu) && r.nu.length===r.grid.length;
+}
+// セルを押したとき：夜勤は、その人が入れるユニットを順に回してから次の記号へ
+// （「共通」なら 夜(U1)→夜(U2)→明。1ユニット・共通でない人は 夜→明）
+function cycleCell(cfg,staff,r,i,d){
+  const g=r.grid, us=staff[i]._units, x=g[i][d];
+  if(x==='夜'){
+    const k=us.indexOf(nightUnit(cfg,staff,{g,nu:r.nu},i,d));
+    if(k>=0 && k<us.length-1){ r.nu[i][d]=us[k+1]; return; } // 記号は変えず、ユニットだけ次へ
+  }
+  const nx=CODES[(CODES.indexOf(x)+1)%CODES.length];
+  g[i][d]=nx;
+  r.nu[i][d]=nx==='夜'?us[0]:0;
+}
+function renderResult(){
+  if(!resultOk()){$('out').style.display='none';return;}
+  const r=state.result, cfg=makeCfg(), staff=prepStaff(cfg), g=r.grid, res={g,nu:r.nu}, ev=evaluate(cfg,staff,res);
+  $('out').style.display='';
+  $('outTitle').textContent=`${r.year}年${r.month}月 勤務表`;
+  let h='<thead><tr><th>名前</th>';
+  for(let d=0;d<cfg.nd;d++){const w=cfg.wd(d); h+=`<th class="${w==='土'?'sat':w==='日'?'sun':''}">${d+1}<br>${w}</th>`;}
+  h+='<th>夜勤</th><th>勤務日<br><small>明け含む</small></th><th>公休</th><th>有給</th><th>時間<br><small>有給は含まない</small></th></tr></thead><tbody>';
+  staff.forEach((s,i)=>{
+    const tag=(cfg.units>1?`［${s.unit==='共通'?'共':'U'+esc(s.unit)}］`:'')+(s.newbie?'（新）':'')+(s.cert==='介護福祉士'?'・介福':s.cert==='看護師'?'・看護':'');
+    h+=`<tr><td class="name">${esc(s.name||('職員'+(i+1)))}${tag}</td>`;
+    for(let d=0;d<cfg.nd;d++){ const x=g[i][d]; const u=(x==='夜'&&cfg.units>1)?`<br><small>U${esc(nightUnit(cfg,staff,res,i,d))}</small>`:''; h+=`<td class="s-${x} cell" data-i="${i}" data-d="${d}">${x}${u}</td>`; }
+    const p=ev.per[i]; h+=`<td>${p.night}</td><td>${p.work}</td><td>${p.off}</td><td>${p.paid}</td><td>${p.hrs}</td></tr>`;
+  });
+  const rows=[['早','早番',cfg.needE],['日','日勤',cfg.needD],['遅','遅番',cfg.needL]];
+  rows.forEach(([k,label,need])=>{
+    h+=`<tr><td class="name">${label}の人数</td>`;
+    for(let d=0;d<cfg.nd;d++){const v=ev.dayCnt[d][k]; h+=`<td class="${v<need?'short':''}">${v}</td>`;}
+    h+='<td></td><td></td><td></td><td></td><td></td></tr>';
+  });
+  for(let u=1;u<=cfg.units;u++){
+    h+=`<tr><td class="name">${cfg.units>1?'ユニット'+u+'の':''}夜勤</td>`;
+    for(let d=0;d<cfg.nd;d++){const v=ev.dayCnt[d].perU[u]; h+=`<td class="${v<1?'short':''}">${v}</td>`;}
+    h+='<td></td><td></td><td></td><td></td><td></td></tr>';
+  }
+  $('result').innerHTML=h+'</tbody>';
+  $('result').querySelectorAll('td.cell').forEach(td=>td.addEventListener('click',()=>{
+    const i=+td.dataset.i,d=+td.dataset.d; cycleCell(cfg,staff,r,i,d); save(); renderResult();
+  }));
+  $('checks').innerHTML = ev.warns.length
+    ? `<p class="warn"><b>注意が ${ev.warns.length}件あります。</b>人が足りない・条件を守れない・入力が読めない所です。職員や人数を見直すか、セルを押して直してください。</p><ul class="warns">${ev.warns.slice(0,40).map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>${ev.warns.length>40?'<p class="note">ほか '+(ev.warns.length-40)+'件</p>':''}`
+    : '<p class="ok"><b>この画面で入れた条件は、すべて守れています。</b>（人員の基準に合っているかは、事業所で確かめてください）</p>';
+  if(ev.infos.length) $('checks').innerHTML+=`<p class="note">お知らせ：</p><ul class="warns note">${ev.infos.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul>`;
+}
+
+function csvCell(v){ v=String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; }
+function toCSV(){
+  if(!resultOk()){alert('先に勤務表を作ってください');return;}
+  const r=state.result, cfg=makeCfg(), staff=prepStaff(cfg), res={g:r.grid,nu:r.nu}, ev=evaluate(cfg,staff,res);
+  const lines=[];
+  lines.push(['名前','常勤/パート','ユニット','資格'].concat(Array.from({length:cfg.nd},(_,d)=>(d+1)+'('+cfg.wd(d)+')')).concat(['夜勤','勤務日(明け含む)','公休','有給','時間']).map(csvCell).join(','));
+  staff.forEach((s,i)=>{ const p=ev.per[i]; lines.push([s.name,s.type,s.unit,s.cert].concat(r.grid[i].map((x,d)=>x==='夜'&&cfg.units>1?'夜'+nightUnit(cfg,staff,res,i,d):x)).map(csvCell).concat([p.night,p.work,p.off,p.paid,p.hrs]).join(',')); });
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`勤務表_${r.year}年${r.month}月.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+function nextMonth(){
+  if(!resultOk()) return;
+  if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。よろしいですか？')) return;
+  const g=state.result.grid;
+  state.staff.forEach((s,i)=>{ s.prev=g[i].slice(-10).map(c=>c==='希'?'休':c).join(''); s.wish=''; });
+  state.month++; if(state.month>12){state.month=1;state.year++;}
+  state.result=null; save(); renderSettings(); renderStaff(); renderResult();
+  window.scrollTo(0,0);
+}
+
+const SAMPLE1={units:1,needE:1,needD:1,needL:1,staff:[
+ {name:'青木',cert:'介護福祉士',nMin:5,nMax:6},
+ {name:'石田',cert:'介護福祉士',nMin:5,nMax:6,wish:'10'},
+ {name:'上野',nMin:5,nMax:6,wish:'20〜21'},
+ {name:'江口',nMin:3,nMax:4},
+ {name:'大西',cert:'看護師',nMin:4,nMax:6,prev:'日休夜'},
+ {name:'加藤',nMin:5,nMax:6,wish:'5日'},
+ {name:'木村',type:'パート',night:false,nMin:0,nMax:0,days:'平日',cap:16},
+ {name:'久保',type:'パート',cert:'介護福祉士',night:false,nMin:0,nMax:0,days:'土日月',cap:10},
+]};
+const SAMPLE2={units:2,needE:2,needD:1,needL:2,staff:[
+ {name:'青木',unit:'1',cert:'介護福祉士',nMin:4,nMax:6},
+ {name:'石田',unit:'1',cert:'介護福祉士',nMin:4,nMax:6,wish:'10'},
+ {name:'上野',unit:'1',nMin:4,nMax:6,wish:'20〜21'},
+ {name:'江口',unit:'1',nMin:4,nMax:6},
+ {name:'大西',unit:'1',cert:'看護師',nMin:4,nMax:6,prev:'日休夜'},
+ {name:'加藤',unit:'1',newbie:true,nMin:0,nMax:0,wish:'5日'},
+ {name:'佐藤',unit:'2',cert:'介護福祉士',nMin:4,nMax:6},
+ {name:'清水',unit:'2',cert:'介護福祉士',nMin:4,nMax:6,wish:'15'},
+ {name:'鈴木',unit:'2',nMin:4,nMax:6},
+ {name:'田中',unit:'2',nMin:4,nMax:6,wish:'24-25'},
+ {name:'中村',unit:'2',nMin:4,nMax:6},
+ {name:'野口',unit:'共通',cert:'介護福祉士',nMin:3,nMax:6},
+ {name:'木村',type:'パート',unit:'共通',night:false,nMin:0,nMax:0,days:'平日',cap:16},
+ {name:'久保',type:'パート',unit:'共通',cert:'介護福祉士',night:false,nMin:0,nMax:0,days:'土日月',cap:12},
+]};
+function loadSample(sm){
+  if(state.staff.length && !confirm('今の職員の一覧を、見本に置きかえますか？')) return;
+  Object.assign(state,{units:sm.units,needE:sm.needE,needD:sm.needD,needL:sm.needL});
+  state.staff=sm.staff.map(newStaff); state.result=null; $('staffChanged').style.display='none';
+  save(); renderSettings(); renderStaff(); renderResult();
+}
+
+$('addStaff').addEventListener('click',()=>{state.staff.push(newStaff());staffChanged();});
+$('sample').addEventListener('click',()=>loadSample(SAMPLE1));
+$('sample2').addEventListener('click',()=>loadSample(SAMPLE2));
+$('clearAll').addEventListener('click',()=>{ if(!confirm('入れた職員と勤務表を、すべて消しますか？（もとに戻せません）')) return; state=defaultState(); try{localStorage.removeItem(STORE);}catch(e){} $('staffChanged').style.display='none'; saveWarned=false; document.querySelectorAll('footer p.warn').forEach(e=>e.remove()); renderSettings(); renderStaff(); renderResult(); });
+// 年・月・ユニット数を変えて今の勤務表と合わなくなるときは、先に確かめる
+function settingChange(k){
+  if(['year','month','units'].includes(k) && resultOk()){
+    const nv={year:num($('year').value,2000,2100,state.year),month:num($('month').value,1,12,state.month),units:num($('units').value,1,3,1)};
+    if(nv[k]!==state[k]){
+      if(!confirm('勤務表は作り直しになります。よろしいですか？')){ renderSettings(); return; }
+      state.result=null; $('staffChanged').textContent='年・月・ユニットの数が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display='';
+    }
+  }
+  readSettings(); save(); if(k==='units') renderStaff(); renderResult();
+}
+SETKEYS.concat(['ruleNewbie','ruleCert']).forEach(k=>$(k).addEventListener('change',()=>settingChange(k)));
+$('make').addEventListener('click',run);
+$('csv').addEventListener('click',toCSV);
+$('print').addEventListener('click',()=>window.print());
+$('nextMonth').addEventListener('click',nextMonth);
+renderSettings(); renderStaff(); renderResult();
+</script>
+</body>
+</html>
