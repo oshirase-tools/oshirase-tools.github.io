@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>グループホームの勤務表を無料で自動作成｜夜勤・明け・希望休に対応</title>
-<meta name="description" content="グループホーム・小さな介護施設の1か月の勤務表を無料で自動作成。ユニットごとの夜勤、夜勤→明け→休みの並び、夜勤回数の公平さ、新人だけの夜勤を避ける、希望休、前の月からの続き、勤務時間の合計に対応。名前はこのパソコンの中だけに保存し、外へ送りません。">
+<meta name="description" content="グループホーム・小さな介護施設の1か月の勤務表を無料で自動作成。ユニットごとの夜勤、夜勤→明け→休みの並び、夜勤回数の公平さ、新人だけの夜勤を避ける、希望休、前の月からの続き、勤務時間の合計に対応。入力した名前や希望休はこのパソコンの中だけに保存し、外へ送りません（使われ方は Google アナリティクスで数えます）。">
+<!-- Google アナリティクスの測定 ID（GA_ID）とアンケートの URL（SURVEY_URL）は、下の JavaScript（script タグ）のいちばん上で入れます -->
 <style>
 :root{--bg:#f7f7f5;--card:#fff;--ink:#222;--sub:#666;--line:#ddd;--accent:#2b6cb0;--warn:#c53030;--ok:#2f855a;
 --c-early:#fefcbf;--c-day:#e6fffa;--c-late:#feebc8;--c-night:#c3dafe;--c-ake:#e9d8fd;--c-wish:#fed7d7;--c-paid:#c6f6d5;--c-train:#edf2f7}
@@ -54,7 +55,7 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <header>
 <h1>グループホームの勤務表を、無料で自動作成</h1>
 <p><b>職員と希望休を入れて、ボタン1つで1か月分を自動で組みます。</b>Excel 不要・登録不要。印刷・CSV・色つき Excel で保存できます。</p>
-<p>作った勤務表は月ごとに残ります。入力した名前などの内容は、このパソコンのブラウザの中だけに保存され、外には送りません。</p>
+<p>作った勤務表は月ごとに残ります。入力した職員の名前・希望休・勤務表の中身は、このパソコンのブラウザの中だけに保存し、外には送りません。ただし、使われ方を知るために Google アナリティクスを使っています。送るのは、ページを開いたこと・押したボタンの種類と、ブラウザの種類などの使われ方の情報で、入力した中身は送りません（くわしくは下の「この道具が外に送る情報」）。</p>
 </header>
 <main>
 
@@ -167,11 +168,73 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 </section>
 
 </main>
-<section class="noprint" style="max-width:1200px;margin:0 auto 16px"><h2>使ってみた感想を教えてください</h2><p class="note">「ここが合わない」「この条件も入れたい」を、<a href="https://docs.google.com/forms/d/e/1FAIpQLScq4tjom-AefWlfI-S2hK0AvnML6zK9QaSyuq99uRiudkFqIg/viewform" target="_blank" rel="noopener">感想フォーム（Google フォーム・1分）</a>から送ってください。職員や利用者の名前、事業所の名前は書かないでください。いただいた声で、次の直しを決めます。</p><p class="note">事業所の勤務の記号・時間・人数の決まりに合わせた調整は、有料で受けています（<a href="https://coconala.com/services/4524338" target="_blank" rel="noopener">ココナラ「グループホームの勤務表ツールを決まりに合わせます」</a>）。職員の名前は受け取りません。</p></section>
-<footer>入力した名前や希望休、保存した月の勤務表は、このパソコンのブラウザの中（localStorage）にだけ保存されます。「ファイルに保存」で作るファイルも、このパソコンに保存されるだけです。サーバーには送りません。共用のパソコンで使ったあとは「この道具の中身を全部消す」を押してください。</footer>
+<section class="noprint" style="max-width:1200px;margin:0 auto 16px"><h2>使ってみた感想を教えてください</h2><p class="note">「ここが合わない」「この条件も入れたい」を、<a href="https://docs.google.com/forms/d/e/1FAIpQLScq4tjom-AefWlfI-S2hK0AvnML6zK9QaSyuq99uRiudkFqIg/viewform" target="_blank" rel="noopener">感想フォーム（Google フォーム・1分）</a>から送ってください。職員や利用者の名前、事業所の名前は書かないでください。いただいた声で、次の直しを決めます。</p><p class="note">事業所の勤務の記号・時間・人数の決まりに合わせた調整は、有料で受けています（<a id="coconalaLink" href="https://coconala.com/services/4524338" target="_blank" rel="noopener">ココナラ「グループホームの勤務表ツールを決まりに合わせます」</a>）。職員の名前は受け取りません。</p></section>
+<section class="noprint" id="paidBox" hidden style="max-width:1200px;margin:0 auto 16px"><h2>有料版について（予定・まだありません）</h2>
+<p class="note">いまの勤務表メーカーは無料で使えます。ココナラで受けている調整の手伝いとは別に、道具そのものの有料版を作るかどうかを考えています。</p>
+<ol class="note" style="margin:0 0 8px;padding-left:1.4em">
+<li>有料版はまだ作っていません。作るかどうかも、まだ決めていません。</li>
+<li>値段、払い方（買い切りか月ごとか）、入る機能、始める時期は、どれも決まっていません。</li>
+<li>下のアンケートは、作るかどうかを決めるための参考にします。答えても、買う約束にはなりません。予約・お金の受け取りはしていません。</li>
+<li>今ある無料の機能（勤務表を自動で作る・保存・印刷・Excel 保存など）は、有料版を作っても無料のまま使えます。</li>
+</ol>
+<p class="note"><a id="surveyLink" target="_blank" rel="noopener">アンケートに答える（Google フォーム・約1分・名前やメールは聞きません）</a></p></section>
+<section class="noprint" id="gaInfo" style="max-width:1200px;margin:0 auto 16px"><h2>この道具が外に送る情報</h2>
+<p class="note">この道具は、どれだけ使われているかを知り、直す所を決めるために、Google LLC の「Google アナリティクス」を使っています。</p>
+<ol class="note" style="margin:0;padding-left:1.4em">
+<li>送る先：Google LLC（Google アナリティクス）</li>
+<li>送る情報：ページを開いたこと、押したボタンの種類（例：「勤務表を自動で作る」）、ページを見ていた時間、ページのアドレス、どのページから来たか、ブラウザや端末の種類、おおよその地域、Cookie による識別のための番号</li>
+<li>送らない情報：入力した職員の名前、希望休、勤務表の中身、設定の中身</li>
+<li>目的：使われ方の数を数え、道具の直しを決めるため。広告には使いません（Google シグナルと広告の機能はオフにしています）</li>
+<li>Google アナリティクスでのデータの扱い：<a href="https://policies.google.com/technologies/partner-sites?hl=ja" target="_blank" rel="noopener">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用</a></li>
+<li>止めたい方：<a href="https://tools.google.com/dlpage/gaoptout?hl=ja" target="_blank" rel="noopener">Google アナリティクス オプトアウト アドオン</a>を使うか、ブラウザの Cookie を止めてください。止めても道具はふつうに使えます。</li>
+</ol></section>
+<footer>入力した名前や希望休、保存した月の勤務表は、このパソコンのブラウザの中（localStorage）にだけ保存され、サーバーには送りません。「ファイルに保存」で作るファイルも、このパソコンに保存されるだけです。ページを開いたことや押したボタンの種類などの使われ方の情報は、Google アナリティクスで Google に送られます（すぐ上の「この道具が外に送る情報」）。共用のパソコンで使ったあとは「この道具の中身を全部消す」を押してください。</footer>
 
 <script>
 'use strict';
+/* ---------- Google アナリティクス 4 とアンケート（ここだけ直せば動く） ----------
+   GA_ID：GA4 の測定 ID。'G-XXXXXXXXXX' のままなら、何も読み込まず、何も送らない
+   SURVEY_URL：有料版のアンケート（Google フォーム）の URL。空なら「有料版について」の枠ごと出さない */
+const GA_ID = 'G-1HFQ06R1X2';
+const SURVEY_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScNOqP4i3vICXeZkMqPj2dHBwjlvPpUr56h9m58Be0ga9t6kw/viewform';
+const GA_PLACEHOLDER='G-XXXXXXXXXX';
+// 送ってよいイベントの名前だけ。パラメータは付けない（入力欄の値・画面の文字・User-ID は送らない）
+const GA_EVENTS=['click_generate','click_xlsx','click_csv','click_print','click_next_month','click_survey','click_coconala'];
+function gaEnabled(){ return typeof GA_ID==='string' && GA_ID!==GA_PLACEHOLDER && /^G-[A-Z0-9]{4,20}$/.test(GA_ID); }
+function gaInit(){
+  if(!gaEnabled()) return false;
+  try{
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){ window.dataLayer.push(arguments); };
+    window.gtag('set','allow_ad_personalization_signals',false); window.gtag('set','allow_google_signals',false);
+    window.gtag('js',new Date());
+    window.gtag('config',GA_ID,{allow_google_signals:false,allow_ad_personalization_signals:false});
+    const s=document.createElement('script'); s.async=true;
+    s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(GA_ID);
+    (document.head||document.body).appendChild(s);
+    return true;
+  }catch(e){ return false; }
+}
+function gaEvent(name){
+  try{
+    if(!gaEnabled() || !GA_EVENTS.includes(name) || typeof window.gtag!=='function') return;
+    window.gtag('event',name);
+  }catch(e){}
+}
+function surveyOk(){ return typeof SURVEY_URL==='string' && /^https:\/\/(docs\.google\.com\/forms\/|forms\.gle\/)[\w\-\/?=&.%]*$/.test(SURVEY_URL); }
+function setupPaidBox(){
+  try{
+    const box=document.getElementById('paidBox'), a=document.getElementById('surveyLink');
+    if(!box) return;
+    if(!surveyOk() || !a){ box.hidden=true; box.remove(); return; }
+    a.href=SURVEY_URL; box.hidden=false;
+  }catch(e){}
+}
+function gaBind(){
+  // 道具のボタン（make・xls・csv・print・nextMonth）は、下のそれぞれの click の処理の中で gaEvent を呼ぶ。ここはリンクだけ
+  [['surveyLink','click_survey'],['coconalaLink','click_coconala']]
+    .forEach(([id,name])=>{ try{ const el=document.getElementById(id); if(el) el.addEventListener('click',()=>gaEvent(name)); }catch(e){} });
+}
 const STORE='kinmuhyo-gh-v3';
 const CODES=['早','日','遅','夜','明','休','希','有','研'];
 const WORK=new Set(['早','日','遅','夜','明','研']);
@@ -913,16 +976,17 @@ function settingChange(k){
   readSettings(); fixWorkKey(); save(); if(k==='units') renderStaff(); renderResult();
 }
 SETKEYS.concat(['ruleNewbie','ruleCert']).forEach(k=>$(k).addEventListener('change',()=>settingChange(k)));
-$('make').addEventListener('click',run);
-$('csv').addEventListener('click',toCSV);
-$('xls').addEventListener('click',toXLSX);
-$('print').addEventListener('click',()=>window.print());
-$('nextMonth').addEventListener('click',nextMonth);
+$('make').addEventListener('click',()=>{ gaEvent('click_generate'); run(); });
+$('csv').addEventListener('click',()=>{ gaEvent('click_csv'); toCSV(); });
+$('xls').addEventListener('click',()=>{ gaEvent('click_xlsx'); toXLSX(); });
+$('print').addEventListener('click',()=>{ gaEvent('click_print'); window.print(); });
+$('nextMonth').addEventListener('click',()=>{ gaEvent('click_next_month'); nextMonth(); });
 $('histSel').addEventListener('change',()=>showMonth($('histSel').value));
 $('exportJson').addEventListener('click',exportJSON);
 $('importJson').addEventListener('click',()=>$('importFile').click());
 $('importFile').addEventListener('change',()=>{ const el=$('importFile'); const f=el.files&&el.files[0]; el.value=''; importFile(f); });
 renderSettings(); renderStaff(); renderResult();
+setupPaidBox(); gaBind(); gaInit();
 </script>
 </body>
 </html>
