@@ -53,7 +53,7 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <body>
 <header>
 <h1>グループホームの勤務表を、無料で自動作成</h1>
-<p><b>職員と希望休を入れて、ボタン1つで1か月分を自動で組みます。</b>Excel 不要・登録不要・印刷と CSV 出力に対応。</p>
+<p><b>職員と希望休を入れて、ボタン1つで1か月分を自動で組みます。</b>Excel 不要・登録不要。印刷・CSV・色つき Excel で保存できます。</p>
 <p>作った勤務表は月ごとに残ります。入力した名前などの内容は、このパソコンのブラウザの中だけに保存され、外には送りません。</p>
 </header>
 <main>
@@ -158,9 +158,11 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <div id="checks"></div>
 <div class="row noprint" style="margin-top:10px">
 <button class="sub" id="csv">CSV で保存（Excel で開けます）</button>
+<button class="sub" id="xls">Excel で保存（色つき）</button>
 <button class="sub" id="print">印刷する</button>
 <button id="nextMonth">次の月へ引き継ぐ</button>
 </div>
+<p class="note noprint" id="xlsNote">「Excel で保存（色つき）」のファイルは、Excel（.xlsx）で開けます。外には送りません。ダウンロードしたファイルは、Excel の上に黄色い帯（保護ビュー）が出ます。インターネットから来たファイルにはいつも出る表示なので、直すときや印刷するときは「編集を有効にする」を押してください。</p>
 <p class="note noprint" id="nextNote">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。<b>今の月の勤務表は残ります</b>（画面の上の「保存した月」から見られます。新しい12か月まで）。</p>
 </section>
 
@@ -536,6 +538,7 @@ function prepStaff(cfg,h){
 function run(){
   readSettings();
   if(!state.staff.length){viewKey=null; save(); alert('職員を1人以上入れてください');return;}
+  fixWorkKey();
   // 保存した月のうち、いちばん新しい月より前の月を作り直すときだけ、置きかえる前に確かめる。取り消したら何もしない
   // （今作業している月＝いちばん新しい月で、職員やユニットを変えて作り直すときは聞かない）
   if(isPastSaved(state.year,state.month)&&!resultOk()&&!confirm(`保存した${state.year}年${state.month}月の表を作り直して置きかえます。前月の終わりの欄も、その月の前の月に合っているか確かめてください。よろしいですか？`)) return;
@@ -559,6 +562,16 @@ function run(){
 function workingKey(){
   const ks=Object.keys(state.history||{}).sort(); const a=ks.length?ks[ks.length-1]:'', b=state.workKey||'';
   return a>b?a:b;
+}
+// 表が消えていて、作業中の月が保存した月のどれとも合わないときは、今の年・月に戻す
+// （「次の月へ」で進んだ月＝保存した月のいちばん新しい月の次の月は、まだ表がなくても正しいので残す）
+function fixWorkKey(){
+  if(resultOk()) return;
+  const h=state.history||{}, wk=state.workKey;
+  if(!wk||h[wk]) return;
+  const ks=Object.keys(h).sort();
+  if(ks.length){ const [y,m]=ks[ks.length-1].split('-').map(Number); if(wk===ymKey(m===12?y+1:y,m===12?1:m+1)) return; }
+  state.workKey=ymKey(state.year,state.month);
 }
 function isPastSaved(y,m){
   const h=state.history; const key=ymKey(y,m); if(!h||!h[key]) return false;
@@ -664,6 +677,135 @@ function toCSV(){
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
+/* ---------- Excel で保存（色つき）：本物の .xlsx（ZIP・無圧縮）をこの中で作る。ライブラリなし・外には送らない ---------- */
+const XLS_COLOR={早:'FEFCBF',日:'E6FFFA',遅:'FEEBC8',夜:'C3DAFE',明:'E9D8FD',希:'FED7D7',有:'C6F6D5',研:'EDF2F7'}; // 画面の色と同じ
+// XML に入れる文字：XML で使えない字（制御文字・片方だけのサロゲート）は落とし、< & " などは安全にする。
+// 文字のセル（inlineStr）は数式として動かないので、CSV のような「'」は付けない
+function xlsText(v){
+  v=String(v==null?'':v);
+  let o='';
+  for(let k=0;k<v.length;k++){
+    const c=v.charCodeAt(k);
+    if(c>=0xD800&&c<=0xDBFF){ const n=v.charCodeAt(k+1); if(n>=0xDC00&&n<=0xDFFF){ o+=v[k]+v[k+1]; k++; } continue; }
+    if(c>=0xDC00&&c<=0xDFFF) continue;
+    if((c<0x20&&c!==0x0A)||c===0xFFFE||c===0xFFFF) continue;
+    o+=v[k];
+  }
+  return o.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function xlsFileName(y,m){ return `勤務表_${y}年${m}月.xlsx`; }
+function xlsCol(n){ let s=''; n++; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26); } return s; } // 0→A, 26→AA
+// 書式の番号（styles.xml の cellXfs の順）
+const XS={b:1,hd:2,sat:3,sun:4,nm:5,sh:6}; CODES.forEach((c,k)=>{ XS['c'+c]=7+k; });
+function xlsxStyles(){
+  const font=(b,rgb)=>`<font>${b?'<b/>':''}<sz val="11"/>${rgb?`<color rgb="FF${rgb}"/>`:''}<name val="游ゴシック"/><family val="3"/><charset val="128"/></font>`;
+  const fonts=[font(false),font(true),font(true,'2B6CB0'),font(true,'C53030'),font(true,'742A2A')]; // ふつう・太字・土・日・足りない日（字の色は画面と同じ）
+  const fill=rgb=>`<fill><patternFill patternType="solid"><fgColor rgb="FF${rgb}"/><bgColor indexed="64"/></patternFill></fill>`;
+  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>',fill('FEB2B2')]; // 2＝足りない日
+  const fillOf={}; CODES.forEach(c=>{ if(XLS_COLOR[c]){ fillOf[c]=fills.length; fills.push(fill(XLS_COLOR[c])); } });
+  const bc='<color rgb="FFBBBBBB"/>';
+  const borders=['<border><left/><right/><top/><bottom/><diagonal/></border>',`<border><left style="thin">${bc}</left><right style="thin">${bc}</right><top style="thin">${bc}</top><bottom style="thin">${bc}</bottom><diagonal/></border>`];
+  const xf=(f,fl,o)=>{ o=o||{}; return `<xf numFmtId="0" fontId="${f}" fillId="${fl}" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${o.left?'left':'center'}" vertical="center"${o.wrap?' wrapText="1"':''}/></xf>`; };
+  const xfs=['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>',
+    xf(0,0), xf(1,0,{wrap:true}), xf(2,0,{wrap:true}), xf(3,0,{wrap:true}), xf(0,0,{left:true}), xf(4,2)]
+    .concat(CODES.map(c=>xf(c==='夜'?1:0,fillOf[c]||0)));
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    `<fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders>`+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    `<cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="標準" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+}
+// .xlsx の中身（XML の文字）を作る。ZIP にする前の形（[ファイル名, 中身]の並び）で返す
+function xlsxParts(){
+  const v=viewSrc(); if(!v) return null;
+  const r=v.r, cfg=makeCfg(r), staff=prepStaff(cfg,v.h), res={g:r.grid,nu:r.nu}, ev=evaluate(cfg,staff,res);
+  const rows=[]; let rn=0;
+  // cells＝[書式, 値, 'n'なら数]
+  const row=(cells,ht)=>{ rn++; rows.push(`<row r="${rn}"${ht?` ht="${ht}" customHeight="1"`:''}>`+cells.map((c,k)=>{
+    const ref=xlsCol(k)+rn, s=XS[c[0]];
+    if(c[2]==='n'){ const n=Number(c[1]); return `<c r="${ref}" s="${s}"><v>${Number.isFinite(n)?n:0}</v></c>`; }
+    if(c[1]===''||c[1]==null) return `<c r="${ref}" s="${s}"/>`;
+    return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xlsText(c[1])}</t></is></c>`;
+  }).join('')+'</row>'); };
+  const hd=[['hd','名前']];
+  for(let d=0;d<cfg.nd;d++){ const w=cfg.wd(d); hd.push([w==='土'?'sat':w==='日'?'sun':'hd',(d+1)+'\n'+w]); }
+  ['夜勤','勤務日\n(明け含む)','公休','有給','時間\n(有給は含まない)'].forEach(x=>hd.push(['hd',x]));
+  row(hd,32);
+  staff.forEach((s,i)=>{
+    const tag=(cfg.units>1?`［${s.unit==='共通'?'共':'U'+s.unit}］`:'')+(s.newbie?'（新）':'')+(s.cert==='介護福祉士'?'・介福':s.cert==='看護師'?'・看護':'');
+    const t=[['nm',(s.name||('職員'+(i+1)))+tag]];
+    for(let d=0;d<cfg.nd;d++){ const x=r.grid[i][d]; t.push([XS['c'+x]?'c'+x:'b',x==='夜'&&cfg.units>1?'夜U'+nightUnit(cfg,staff,res,i,d):x]); }
+    const p=ev.per[i]; [p.night,p.work,p.off,p.paid,p.hrs].forEach(n=>t.push(['b',n,'n']));
+    row(t);
+  });
+  const blank5=Array.from({length:5},()=>['b','']);
+  [['早','早番',cfg.needE],['日','日勤',cfg.needD],['遅','遅番',cfg.needL]].forEach(([k,label,need])=>{
+    const t=[['nm',label+'の人数']];
+    for(let d=0;d<cfg.nd;d++){ const n=ev.dayCnt[d][k]; t.push([n<need?'sh':'b',n,'n']); }
+    row(t.concat(blank5));
+  });
+  for(let u=1;u<=cfg.units;u++){
+    const t=[['nm',(cfg.units>1?'ユニット'+u+'の':'')+'夜勤']];
+    for(let d=0;d<cfg.nd;d++){ const n=ev.dayCnt[d].perU[u]; t.push([n<1?'sh':'b',n,'n']); }
+    row(t.concat(blank5));
+  }
+  // 列の幅（字の数）：名前・日の列・右の集計5列
+  const cw=[cfg.units>1?24:20].concat(Array(cfg.nd).fill(cfg.units>1?6:4.5)).concat([7,11,7,7,12]);
+  const cols=cw.map((w,k)=>`<col min="${k+1}" max="${k+1}" width="${w}" customWidth="1"/>`).join('');
+  const ns='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const sheet='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+
+    `<worksheet ${ns}><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${xlsCol(cfg.nd+5)+rn}"/>`+
+    '<sheetViews><sheetView workbookViewId="0"><pane xSplit="1" ySplit="1" topLeftCell="B2" activePane="bottomRight" state="frozen"/><selection pane="topRight"/><selection pane="bottomLeft"/><selection pane="bottomRight" activeCell="B2" sqref="B2"/></sheetView></sheetViews>'+
+    `<sheetFormatPr defaultRowHeight="18"/><cols>${cols}</cols><sheetData>${rows.join('')}</sheetData>`+
+    '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
+  const workbook='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+
+    `<workbook ${ns}><bookViews><workbookView/></bookViews><sheets><sheet name="${xlsText(r.year+'年'+r.month+'月')}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const R='http://schemas.openxmlformats.org/officeDocument/2006/relationships', H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n';
+  const files=[
+    ['[Content_Types].xml',H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'+
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'+
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+    ['_rels/.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      `<Relationship Id="rId1" Type="${R}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ['xl/workbook.xml',workbook],
+    ['xl/_rels/workbook.xml.rels',H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+      `<Relationship Id="rId1" Type="${R}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${R}/styles" Target="styles.xml"/></Relationships>`],
+    ['xl/styles.xml',xlsxStyles()],
+    ['xl/worksheets/sheet1.xml',sheet]];
+  return {files,name:xlsFileName(r.year,r.month)};
+}
+// CRC32（ZIP の中身が壊れていないかを見る数）
+const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_T[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+// ZIP（無圧縮 stored）を作る。files＝[[名前, 中身の文字]]。中身は UTF-8
+function zipStored(files){
+  const enc=new TextEncoder(), parts=[], cen=[]; let off=0;
+  const u16=(a,p,v)=>{ a[p]=v&255; a[p+1]=(v>>>8)&255; }, u32=(a,p,v)=>{ u16(a,p,v&0xFFFF); u16(a,p+2,(v>>>16)&0xFFFF); };
+  const DT=((2026-1980)<<9)|(11<<5)|1, TM=0; // 決まった日付 2026-11-01 00:00（中身には関係しない）
+  files.forEach(([name,text])=>{
+    const nb=enc.encode(name), data=enc.encode(text), crc=crc32(data);
+    const lh=new Uint8Array(30+nb.length);
+    u32(lh,0,0x04034b50); u16(lh,4,20); u16(lh,6,0); u16(lh,8,0); u16(lh,10,TM); u16(lh,12,DT);
+    u32(lh,14,crc); u32(lh,18,data.length); u32(lh,22,data.length); u16(lh,26,nb.length); u16(lh,28,0); lh.set(nb,30);
+    const ch=new Uint8Array(46+nb.length);
+    u32(ch,0,0x02014b50); u16(ch,4,20); u16(ch,6,20); u16(ch,8,0); u16(ch,10,0); u16(ch,12,TM); u16(ch,14,DT);
+    u32(ch,16,crc); u32(ch,20,data.length); u32(ch,24,data.length); u16(ch,28,nb.length); u32(ch,38,0); u32(ch,42,off); ch.set(nb,46);
+    parts.push(lh,data); cen.push(ch); off+=lh.length+data.length;
+  });
+  const cenLen=cen.reduce((a,c)=>a+c.length,0);
+  const end=new Uint8Array(22); u32(end,0,0x06054b50); u16(end,8,files.length); u16(end,10,files.length); u32(end,12,cenLen); u32(end,16,off);
+  const out=new Uint8Array(off+cenLen+22); let p=0; parts.concat(cen,[end]).forEach(a=>{ out.set(a,p); p+=a.length; });
+  return out;
+}
+function toXLSX(){
+  const o=xlsxParts();
+  if(!o){alert('先に勤務表を作ってください');return;}
+  const blob=new Blob([zipStored(o.files)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=o.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
 function nextMonth(){
   if(viewKey||!resultOk()) return;
   if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。\n\n今の月の表は残ります（画面の上の「保存した月」から見られます。新しい12か月まで）。\n\n進めてよいですか？')) return;
@@ -700,7 +842,9 @@ function parseImport(text){
   if(!o||typeof o!=='object'||Array.isArray(o)||o.app!==FILE_APP) return bad;
   const d=o.data;
   if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.staff)) return bad;
-  return {ok:true,state:sanitize(d)};
+  const st=sanitize(d);
+  if(!st.workKey) st.workKey=ymKey(st.year,st.month); // workKey のない古いファイル：その時点の年・月を入れる
+  return {ok:true,state:st};
 }
 function applyImport(text){
   const p=parseImport(text);
@@ -766,11 +910,12 @@ function settingChange(k){
       state.result=null; $('staffChanged').textContent='年・月・ユニットの数が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display='';
     }
   }
-  readSettings(); save(); if(k==='units') renderStaff(); renderResult();
+  readSettings(); fixWorkKey(); save(); if(k==='units') renderStaff(); renderResult();
 }
 SETKEYS.concat(['ruleNewbie','ruleCert']).forEach(k=>$(k).addEventListener('change',()=>settingChange(k)));
 $('make').addEventListener('click',run);
 $('csv').addEventListener('click',toCSV);
+$('xls').addEventListener('click',toXLSX);
 $('print').addEventListener('click',()=>window.print());
 $('nextMonth').addEventListener('click',nextMonth);
 $('histSel').addEventListener('change',()=>showMonth($('histSel').value));
