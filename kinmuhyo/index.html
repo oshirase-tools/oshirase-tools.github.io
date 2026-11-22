@@ -147,7 +147,7 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <button class="sub" id="print">印刷する</button>
 <button id="nextMonth">次の月へ引き継ぐ</button>
 </div>
-<p class="note">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。</p>
+<p class="note">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。<b>今の月の勤務表は消えるので、先に CSV 保存か印刷をしてください。</b></p>
 </section>
 
 </main>
@@ -558,7 +558,7 @@ function toCSV(){
 
 function nextMonth(){
   if(!resultOk()) return;
-  if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。よろしいですか？')) return;
+  if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。\n\n今の月の勤務表は画面から消えます。残したい場合は、先に「CSV で保存」か「印刷する」をしてください。\n\n進めてよいですか？')) return;
   const g=state.result.grid;
   state.staff.forEach((s,i)=>{ s.prev=g[i].slice(-10).map(c=>c==='希'?'休':c).join(''); s.wish=''; });
   state.month++; if(state.month>12){state.month=1;state.year++;}
