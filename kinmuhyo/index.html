@@ -53,13 +53,26 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <body>
 <header>
 <h1>グループホームの勤務表を、無料で自動作成</h1>
-<p><b>Excel 不要・登録不要・印刷と CSV 出力に対応。</b></p>
-<p>職員と希望休を入れて、ボタンを押すだけで1か月分の勤務表ができます。入力した名前などの内容は、このパソコンのブラウザの中だけに保存され、外には送りません。</p>
+<p><b>職員と希望休を入れて、ボタン1つで1か月分を自動で組みます。</b>Excel 不要・登録不要・印刷と CSV 出力に対応。</p>
+<p>作った勤務表は月ごとに残ります。入力した名前などの内容は、このパソコンのブラウザの中だけに保存され、外には送りません。</p>
 </header>
 <main>
 
 <div class="caution">この道具は、人員の基準や労働基準法に合っているかを<b>判定しません</b>。「入れた条件を守れたか」を知らせるだけです。役所に出す前に、事業所で確かめてください。<br>
 2交代（16時間夜勤）の事業所向けです。3交代（準夜・深夜）や宿直の事業所には向きません。</div>
+
+<section class="input" id="histBox">
+<h2>保存した月・ファイル</h2>
+<div class="row">
+<label>保存した月 <select id="histSel"></select></label>
+<span id="histNone" class="note">まだありません（勤務表を作ると、月ごとに残ります。新しい12か月まで）</span>
+<button class="sub" id="exportJson">ファイルに保存（.json）</button>
+<button class="sub" id="importJson">ファイルを開く</button>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+</div>
+<p id="histMsg" class="warn" style="display:none"></p>
+<p class="note" style="margin:6px 0 0">「ファイルに保存」は、設定・職員・保存した月を1つのファイルにまとめて、このパソコンに保存します。外には送りません。「ファイルを開く」で、そのファイルの中身に置きかえます。<b>ファイルには職員の名前が入ります。</b>メールで送ったり、共用のパソコンに置いたままにしたりしないでください。</p>
+</section>
 
 <section class="input">
 <h2>使い方は3つだけ</h2>
@@ -139,7 +152,8 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <section id="out" style="display:none">
 <h2 id="outTitle">勤務表</h2>
 <div class="legend"><span style="background:var(--c-early)">早 早番</span><span style="background:var(--c-day)">日 日勤</span><span style="background:var(--c-late)">遅 遅番</span><span style="background:var(--c-night)">夜 夜勤</span><span style="background:var(--c-ake)">明 明け</span><span>休 公休</span><span style="background:var(--c-wish)">希 希望休</span><span style="background:var(--c-paid)">有 有給</span><span style="background:var(--c-train)">研 研修</span></div>
-<p class="note noprint">セルを押すと、勤務を手で入れかえられます（早→日→遅→夜→明→休→希→有→研 の順）。入れかえると、下の数と注意が作り直されます。夜勤の行の「U1」などは、その人が入ったユニットです。2ユニット以上で「共通」の人は、夜(U1)→夜(U2)→明 の順に変わります。</p>
+<p id="viewNote" class="note noprint" style="display:none"></p>
+<p class="note noprint" id="editNote">セルを押すと、勤務を手で入れかえられます（早→日→遅→夜→明→休→希→有→研 の順）。入れかえると、下の数と注意が作り直されます。夜勤の行の「U1」などは、その人が入ったユニットです。2ユニット以上で「共通」の人は、夜(U1)→夜(U2)→明 の順に変わります。</p>
 <div class="scroll"><table id="result"></table></div>
 <div id="checks"></div>
 <div class="row noprint" style="margin-top:10px">
@@ -147,12 +161,12 @@ footer{max-width:1200px;margin:0 auto;padding:16px;color:var(--sub);font-size:.8
 <button class="sub" id="print">印刷する</button>
 <button id="nextMonth">次の月へ引き継ぐ</button>
 </div>
-<p class="note">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。<b>今の月の勤務表は消えるので、先に CSV 保存か印刷をしてください。</b></p>
+<p class="note noprint" id="nextNote">「次の月へ引き継ぐ」：月を1つ進め、この月の最後の数日を各職員の「前月の終わり」に入れます。希望休は空にします。<b>今の月の勤務表は残ります</b>（画面の上の「保存した月」から見られます。新しい12か月まで）。</p>
 </section>
 
 </main>
 <section class="noprint" style="max-width:1200px;margin:0 auto 16px"><h2>使ってみた感想を教えてください</h2><p class="note">「ここが合わない」「この条件も入れたい」を、<a href="https://docs.google.com/forms/d/e/1FAIpQLScq4tjom-AefWlfI-S2hK0AvnML6zK9QaSyuq99uRiudkFqIg/viewform" target="_blank" rel="noopener">感想フォーム（Google フォーム・1分）</a>から送ってください。職員や利用者の名前、事業所の名前は書かないでください。いただいた声で、次の直しを決めます。</p><p class="note">事業所の勤務の記号・時間・人数の決まりに合わせた調整は、有料で受けています（<a href="https://coconala.com/services/4524338" target="_blank" rel="noopener">ココナラ「グループホームの勤務表ツールを決まりに合わせます」</a>）。職員の名前は受け取りません。</p></section>
-<footer>入力した名前や希望休は、このパソコンのブラウザの中（localStorage）にだけ保存されます。サーバーには送りません。共用のパソコンで使ったあとは「この道具の中身を全部消す」を押してください。</footer>
+<footer>入力した名前や希望休、保存した月の勤務表は、このパソコンのブラウザの中（localStorage）にだけ保存されます。「ファイルに保存」で作るファイルも、このパソコンに保存されるだけです。サーバーには送りません。共用のパソコンで使ったあとは「この道具の中身を全部消す」を押してください。</footer>
 
 <script>
 'use strict';
@@ -167,13 +181,13 @@ const SETKEYS=['year','month','units','needE','needD','needL','hE','hD','hL','hN
 
 function defaultState(){
   const d=new Date(); d.setMonth(d.getMonth()+1);
-  return {year:d.getFullYear(),month:d.getMonth()+1,units:1,needE:1,needD:1,needL:1,hE:8,hD:8,hL:8,hN:16,maxRun:5,ruleNewbie:true,ruleCert:false,staff:[],result:null};
+  return {year:d.getFullYear(),month:d.getMonth()+1,units:1,needE:1,needD:1,needL:1,hE:8,hD:8,hL:8,hN:16,maxRun:5,ruleNewbie:true,ruleCert:false,staff:[],result:null,history:{},workKey:''};
 }
 function newStaff(o){return Object.assign({name:'',type:'常勤',unit:'1',cert:'なし',newbie:false,night:true,nMin:3,nMax:5,off:9,days:'月火水木金',cap:12,wish:'',prev:''},o||{});}
 function sanitize(s){
   const d=defaultState();
   if(!s||typeof s!=='object') return d;
-  const out=Object.assign(d,s);
+  const out=Object.assign(defaultState(),s); // d は既定値として残す（壊れた年などを d の値に戻すため）
   out.staff=Array.isArray(s.staff)?s.staff.filter(x=>x&&typeof x==='object').map(x=>newStaff(x)):[];
   out.staff.forEach(x=>{ if(!['常勤','パート'].includes(x.type)) x.type='常勤'; if(!['1','2','3','共通'].includes(String(x.unit))) x.unit='1'; x.unit=String(x.unit); if(!['なし','介護福祉士','看護師'].includes(x.cert)) x.cert='なし'; x.name=String(x.name||''); x.wish=String(x.wish||''); x.days=String(x.days||''); x.prev=String(x.prev||''); });
   out.staff.forEach(x=>{ x.newbie=x.newbie===true; x.night=x.night!==false; x.nMin=num(x.nMin,0,15,0); x.nMax=num(x.nMax,0,15,0); x.off=num(x.off,0,20,9); x.cap=num(x.cap,0,31,12); });
@@ -184,8 +198,50 @@ function sanitize(s){
   out.maxRun=num(out.maxRun,2,10,5);
   out.ruleNewbie=typeof out.ruleNewbie==='boolean'?out.ruleNewbie:true; out.ruleCert=out.ruleCert===true;
   if(!resultShapeOk(out.result)) out.result=null;
+  out.history=sanitizeHistory(s.history);
+  // workKey＝今作業している月（「次の月へ」で進んだ月・作った月のうち新しい方）。形がちがえば空に
+  out.workKey=(typeof s.workKey==='string'&&/^\d{4}-\d{2}$/.test(s.workKey))?s.workKey:'';
+  // 前の版の保存（月ごとの保存がない）なら、今の表を「保存した月」に入れる
+  const r=out.result;
+  if(r && r.grid.length===out.staff.length && !out.history[ymKey(r.year,r.month)]){ const e=histEntryFrom(r,out.staff); if(histEntryOk(ymKey(r.year,r.month),e)){ out.history[ymKey(r.year,r.month)]=e; pruneHistory(out.history); } }
   return out;
 }
+/* ---------- 月ごとの保存（state.history['YYYY-MM']） ---------- */
+const HIST_MAX=12;
+function ymKey(y,m){ return String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0'); }
+function histEntryFrom(r,staff){
+  return {grid:r.grid.map(row=>row.slice()),nu:r.nu.map(row=>row.slice()),units:r.units,
+    names:staff.map(x=>String(x.name||'')),wish:staff.map(x=>String(x.wish||'')),prev:staff.map(x=>String(x.prev||''))};
+}
+function histEntryOk(key,h){
+  const m=/^(\d{4})-(\d{2})$/.exec(key); if(!m) return false;
+  const y=+m[1], mo=+m[2]; if(y<2000||y>2100||mo<1||mo>12) return false;
+  if(!(h&&typeof h==='object')) return false;
+  if(!resultShapeOk({year:y,month:mo,units:h.units,grid:h.grid,nu:h.nu})) return false;
+  const nd=new Date(y,mo,0).getDate();
+  if(!h.grid.every(row=>row.length===nd)) return false;
+  return Array.isArray(h.names)&&h.names.length===h.grid.length&&h.names.every(x=>typeof x==='string');
+}
+function sanitizeHistory(src){
+  const out={};
+  if(!src||typeof src!=='object'||Array.isArray(src)) return out;
+  Object.keys(src).forEach(k=>{
+    const h=src[k]; if(!histEntryOk(k,h)) return;
+    const n=h.grid.length, strs=a=>Array.from({length:n},(_,i)=>Array.isArray(a)&&typeof a[i]==='string'?a[i]:'');
+    out[k]={grid:h.grid.map(row=>row.slice()),nu:h.nu.map(row=>row.slice()),units:h.units,names:h.names.slice(),wish:strs(h.wish),prev:strs(h.prev)};
+  });
+  pruneHistory(out);
+  return out;
+}
+function pruneHistory(h){ Object.keys(h).sort().reverse().slice(HIST_MAX).forEach(k=>{ delete h[k]; }); return h; }
+function storeHistory(){
+  if(!resultOk()) return;
+  const r=state.result;
+  if(!state.history||typeof state.history!=='object') state.history={};
+  state.history[ymKey(r.year,r.month)]=histEntryFrom(r,state.staff);
+  pruneHistory(state.history);
+}
+function histMatches(h){ return !!h && h.names.length===state.staff.length && h.names.every((nm,i)=>nm===String(state.staff[i].name||'')); }
 function resultShapeOk(r){
   if(!(r&&typeof r==='object')) return false;
   if(!Number.isInteger(r.year)||!Number.isInteger(r.month)||!Number.isInteger(r.units)||r.units<1||r.units>3) return false;
@@ -195,9 +251,10 @@ function resultShapeOk(r){
   return r.nu.every((row,i)=>Array.isArray(row)&&row.length===r.grid[i].length&&row.every(v=>Number.isInteger(v)&&v>=0&&v<=r.units));
 }
 let state=load();
+let viewKey=null; // 保存した月を見ているときの 'YYYY-MM'（見るだけ）
 function load(){ try{ return sanitize(JSON.parse(localStorage.getItem(STORE))); }catch(e){ return defaultState(); } }
 let saveWarned=false;
-function save(){ try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){ if(!saveWarned){ saveWarned=true; const f=document.querySelector('footer'); if(f) f.insertAdjacentHTML('afterbegin','<p class="warn"><b>このブラウザでは保存ができません（シークレットウィンドウなど）。</b>閉じると入力が消えます。CSV で保存してください。</p>'); } } }
+function save(){ storeHistory(); try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){ if(!saveWarned){ saveWarned=true; const f=document.querySelector('footer'); if(f) f.insertAdjacentHTML('afterbegin','<p class="warn"><b>このブラウザでは保存ができません。</b>閉じると入力が消えるので、『ファイルに保存（.json）』で残してください。</p>'); } } }
 
 function renderSettings(){
   SETKEYS.forEach(k=>$(k).value=state[k]);
@@ -225,6 +282,7 @@ function readSettings(){
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function staffChanged(){
+  viewKey=null;
   if(state.result){ state.result=null; $('staffChanged').textContent='職員の一覧が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; }
   save(); renderStaff(); renderResult();
 }
@@ -259,7 +317,7 @@ function renderStaff(){
         if(k==='newbie' && s.newbie){ s.nMin=0; }
         save();
         if(k==='type'||k==='newbie') renderStaff(); else markBad(tr,s);
-        if(k==='unit'&&state.result){ state.result=null; $('staffChanged').style.display=''; save(); }
+        if(k==='unit'&&state.result){ state.result=null; $('staffChanged').textContent='職員のユニットが変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; save(); }
         renderResult();
       });
     });
@@ -467,17 +525,21 @@ function evaluate(cfg,staff,res){
 }
 
 function seeded(seed){ let t=seed>>>0; return ()=>{ t+=0x6D2B79F5; let r=Math.imul(t^t>>>15,1|t); r^=r+Math.imul(r^r>>>7,61|r); return ((r^r>>>14)>>>0)/4294967296; }; }
-function makeCfg(){
-  const y=state.year, m=state.month, nd=new Date(y,m,0).getDate(), first=new Date(y,m-1,1).getDay();
-  return {nd,units:Math.max(1,state.units),needE:state.needE,needD:state.needD,needL:state.needL,hE:state.hE,hD:state.hD,hL:state.hL,hN:state.hN,maxRun:Math.max(2,state.maxRun),ruleNewbie:state.ruleNewbie,ruleCert:state.ruleCert,wd:d=>WD[(first+d)%7]};
+function makeCfg(src){
+  const y=src?src.year:state.year, m=src?src.month:state.month, nd=new Date(y,m,0).getDate(), first=new Date(y,m-1,1).getDay();
+  return {nd,units:src?src.units:Math.max(1,state.units),needE:state.needE,needD:state.needD,needL:state.needL,hE:state.hE,hD:state.hD,hL:state.hL,hN:state.hN,maxRun:Math.max(2,state.maxRun),ruleNewbie:state.ruleNewbie,ruleCert:state.ruleCert,wd:d=>WD[(first+d)%7]};
 }
-function prepStaff(cfg){
-  return state.staff.map(s=>{ const w=parseWish(s.wish,cfg.nd), df=parseDaysFull(s.days); const o=Object.assign({},s,{_wish:w.set,_wishBad:w.bad,_days:df.set,_daysBad:df.bad,_prev:parsePrev(s.prev)}); o._units=unitsOf(o,cfg); return o; });
+function prepStaff(cfg,h){
+  return state.staff.map((s0,i)=>{ const s=h?Object.assign({},s0,{wish:h.wish[i]||'',prev:h.prev[i]||''}):s0; const w=parseWish(s.wish,cfg.nd), df=parseDaysFull(s.days); const o=Object.assign({},s,{_wish:w.set,_wishBad:w.bad,_days:df.set,_daysBad:df.bad,_prev:parsePrev(s.prev)}); o._units=unitsOf(o,cfg); return o; });
 }
 
 function run(){
-  readSettings(); save();
-  if(!state.staff.length){alert('職員を1人以上入れてください');return;}
+  readSettings();
+  if(!state.staff.length){viewKey=null; save(); alert('職員を1人以上入れてください');return;}
+  // 保存した月のうち、いちばん新しい月より前の月を作り直すときだけ、置きかえる前に確かめる。取り消したら何もしない
+  // （今作業している月＝いちばん新しい月で、職員やユニットを変えて作り直すときは聞かない）
+  if(isPastSaved(state.year,state.month)&&!resultOk()&&!confirm(`保存した${state.year}年${state.month}月の表を作り直して置きかえます。前月の終わりの欄も、その月の前の月に合っているか確かめてください。よろしいですか？`)) return;
+  viewKey=null; save();
   const cfg=makeCfg(), staff=prepStaff(cfg);
   const base=(Date.now()^Math.floor(Math.random()*1e9))>>>0;
   let best=null; const t0=performance.now();
@@ -488,10 +550,20 @@ function run(){
     if(best.ev.pen===0 || (best.ev.warns.length===0 && best.ev.pen<=40 && k>300) || performance.now()-t0>2500) break;
   }
   state.result={year:state.year,month:state.month,units:cfg.units,grid:best.res.g,nu:best.res.nu};
+  { const k=ymKey(state.year,state.month); if(k>(state.workKey||'')) state.workKey=k; }
   $('staffChanged').style.display='none';
   save(); renderResult();
 }
 
+// 今作業している月：保存した月のいちばん新しい月と、「次の月へ」で進んだ月の新しい方
+function workingKey(){
+  const ks=Object.keys(state.history||{}).sort(); const a=ks.length?ks[ks.length-1]:'', b=state.workKey||'';
+  return a>b?a:b;
+}
+function isPastSaved(y,m){
+  const h=state.history; const key=ymKey(y,m); if(!h||!h[key]) return false;
+  return key<workingKey();
+}
 function resultOk(){
   const r=state.result; if(!r) return false;
   const nd=new Date(state.year,state.month,0).getDate();
@@ -509,18 +581,53 @@ function cycleCell(cfg,staff,r,i,d){
   g[i][d]=nx;
   r.nu[i][d]=nx==='夜'?us[0]:0;
 }
+// 画面に出す表：保存した月を見ているときはそれ（見るだけ）、ほかは今の月の表
+function viewSrc(){
+  if(viewKey){
+    const h=state.history&&state.history[viewKey];
+    if(h&&histMatches(h)){ const [y,m]=viewKey.split('-').map(Number); return {r:{year:y,month:m,units:h.units,grid:h.grid,nu:h.nu},h,ro:true}; }
+    viewKey=null;
+  }
+  return resultOk()?{r:state.result,h:null,ro:false}:null;
+}
+function renderHistory(){
+  const keys=Object.keys(state.history||{}).sort().reverse();
+  const cur=ymKey(state.year,state.month);
+  $('histSel').innerHTML=`<option value="">今の月（${esc(state.year)}年${esc(state.month)}月）</option>`+keys.map(k=>{ const [y,m]=k.split('-').map(Number); return `<option value="${esc(k)}"${k===viewKey?' selected':''}>${esc(y)}年${esc(m)}月${k===cur?'（今の月）':''}</option>`; }).join('');
+  $('histSel').value=viewKey||'';
+  $('histSel').style.display=keys.length?'':'none';
+  $('histNone').style.display=keys.length?'none':'';
+}
+function showMonth(key){
+  $('histMsg').style.display='none'; $('histMsg').textContent='';
+  const h=key&&state.history?state.history[key]:null;
+  if(!key||!h){ viewKey=null; renderResult(); return !key; }
+  if(!histMatches(h)){
+    viewKey=null; $('histMsg').textContent='職員が変わったので表示できません（その月の職員の人数・並び・名前が、今の職員の一覧とちがいます）。元の名前にもどすと見られます。'; $('histMsg').style.display='';
+    renderResult(); return false;
+  }
+  viewKey=(key===ymKey(state.year,state.month)&&resultOk())?null:key;
+  renderResult();
+  const o=$('out'); if(o&&typeof o.scrollIntoView==='function') o.scrollIntoView();
+  return true;
+}
 function renderResult(){
-  if(!resultOk()){$('out').style.display='none';return;}
-  const r=state.result, cfg=makeCfg(), staff=prepStaff(cfg), g=r.grid, res={g,nu:r.nu}, ev=evaluate(cfg,staff,res);
+  const v=viewSrc(); renderHistory();
+  if(!v){$('out').style.display='none';return;}
+  const r=v.r, cfg=makeCfg(r), staff=prepStaff(cfg,v.h), g=r.grid, res={g,nu:r.nu}, ev=evaluate(cfg,staff,res);
   $('out').style.display='';
   $('outTitle').textContent=`${r.year}年${r.month}月 勤務表`;
+  $('viewNote').textContent=v.ro?`保存した ${r.year}年${r.month}月 の表を見ています（見るだけで、直せません）。上の「保存した月」で「今の月」を選ぶと戻ります。注意と人数は、今の設定・資格・新人の印で数えます。`:'';
+  $('viewNote').style.display=v.ro?'':'none';
+  $('editNote').style.display=v.ro?'none':'';
+  $('nextMonth').style.display=v.ro?'none':''; $('nextNote').style.display=v.ro?'none':'';
   let h='<thead><tr><th>名前</th>';
   for(let d=0;d<cfg.nd;d++){const w=cfg.wd(d); h+=`<th class="${w==='土'?'sat':w==='日'?'sun':''}">${d+1}<br>${w}</th>`;}
   h+='<th>夜勤</th><th>勤務日<br><small>明け含む</small></th><th>公休</th><th>有給</th><th>時間<br><small>有給は含まない</small></th></tr></thead><tbody>';
   staff.forEach((s,i)=>{
     const tag=(cfg.units>1?`［${s.unit==='共通'?'共':'U'+esc(s.unit)}］`:'')+(s.newbie?'（新）':'')+(s.cert==='介護福祉士'?'・介福':s.cert==='看護師'?'・看護':'');
     h+=`<tr><td class="name">${esc(s.name||('職員'+(i+1)))}${tag}</td>`;
-    for(let d=0;d<cfg.nd;d++){ const x=g[i][d]; const u=(x==='夜'&&cfg.units>1)?`<br><small>U${esc(nightUnit(cfg,staff,res,i,d))}</small>`:''; h+=`<td class="s-${x} cell" data-i="${i}" data-d="${d}">${x}${u}</td>`; }
+    for(let d=0;d<cfg.nd;d++){ const x=g[i][d]; const u=(x==='夜'&&cfg.units>1)?`<br><small>U${esc(nightUnit(cfg,staff,res,i,d))}</small>`:''; h+=`<td class="s-${x}${v.ro?'':' cell'}" data-i="${i}" data-d="${d}">${x}${u}</td>`; }
     const p=ev.per[i]; h+=`<td>${p.night}</td><td>${p.work}</td><td>${p.off}</td><td>${p.paid}</td><td>${p.hrs}</td></tr>`;
   });
   const rows=[['早','早番',cfg.needE],['日','日勤',cfg.needD],['遅','遅番',cfg.needL]];
@@ -535,7 +642,7 @@ function renderResult(){
     h+='<td></td><td></td><td></td><td></td><td></td></tr>';
   }
   $('result').innerHTML=h+'</tbody>';
-  $('result').querySelectorAll('td.cell').forEach(td=>td.addEventListener('click',()=>{
+  if(!v.ro) $('result').querySelectorAll('td.cell').forEach(td=>td.addEventListener('click',()=>{
     const i=+td.dataset.i,d=+td.dataset.d; cycleCell(cfg,staff,r,i,d); save(); renderResult();
   }));
   $('checks').innerHTML = ev.warns.length
@@ -546,8 +653,9 @@ function renderResult(){
 
 function csvCell(v){ v=String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; }
 function toCSV(){
-  if(!resultOk()){alert('先に勤務表を作ってください');return;}
-  const r=state.result, cfg=makeCfg(), staff=prepStaff(cfg), res={g:r.grid,nu:r.nu}, ev=evaluate(cfg,staff,res);
+  const v=viewSrc();
+  if(!v){alert('先に勤務表を作ってください');return;}
+  const r=v.r, cfg=makeCfg(r), staff=prepStaff(cfg,v.h), res={g:r.grid,nu:r.nu}, ev=evaluate(cfg,staff,res);
   const lines=[];
   lines.push(['名前','常勤/パート','ユニット','資格'].concat(Array.from({length:cfg.nd},(_,d)=>(d+1)+'('+cfg.wd(d)+')')).concat(['夜勤','勤務日(明け含む)','公休','有給','時間']).map(csvCell).join(','));
   staff.forEach((s,i)=>{ const p=ev.per[i]; lines.push([s.name,s.type,s.unit,s.cert].concat(r.grid[i].map((x,d)=>x==='夜'&&cfg.units>1?'夜'+nightUnit(cfg,staff,res,i,d):x)).map(csvCell).concat([p.night,p.work,p.off,p.paid,p.hrs]).join(',')); });
@@ -557,13 +665,58 @@ function toCSV(){
 }
 
 function nextMonth(){
-  if(!resultOk()) return;
-  if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。\n\n今の月の勤務表は画面から消えます。残したい場合は、先に「CSV で保存」か「印刷する」をしてください。\n\n進めてよいですか？')) return;
+  if(viewKey||!resultOk()) return;
+  if(!confirm('月を1つ進めて、この月の最後の数日を「前月の終わり」に入れます。希望休は空にします。\n\n今の月の表は残ります（画面の上の「保存した月」から見られます。新しい12か月まで）。\n\n進めてよいですか？')) return;
+  save(); // 今の月を「保存した月」に入れてから進める
   const g=state.result.grid;
   state.staff.forEach((s,i)=>{ s.prev=g[i].slice(-10).map(c=>c==='希'?'休':c).join(''); s.wish=''; });
   state.month++; if(state.month>12){state.month=1;state.year++;}
+  { const k=ymKey(state.year,state.month); if(k>(state.workKey||'')) state.workKey=k; }
   state.result=null; save(); renderSettings(); renderStaff(); renderResult();
   window.scrollTo(0,0);
+}
+
+/* ---------- ファイルに保存・ファイルを開く（このパソコンの中だけ。外には送らない） ---------- */
+const FILE_APP='kinmuhyo-gh';
+const FILE_MAX=2*1024*1024;
+function exportData(){
+  const keep=['year','month','units','needE','needD','needL','hE','hD','hL','hN','maxRun','ruleNewbie','ruleCert','staff','result','history','workKey'];
+  const data={}; keep.forEach(k=>{ data[k]=state[k]; });
+  return {app:FILE_APP,version:1,data};
+}
+function exportFileName(d){ d=d||new Date(); return '勤務表メーカー_保存_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.json'; }
+function exportJSON(){
+  readSettings(); save();
+  const blob=new Blob([JSON.stringify(exportData(),null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=exportFileName(); document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+// 読み込んだ文字を調べる。おかしければ {ok:false,msg}
+function parseImport(text){
+  const bad={ok:false,msg:'このファイルは開けません。「ファイルに保存」で作った勤務表メーカーのファイル（.json）を選んでください。今の中身はそのままです。'};
+  if(typeof text!=='string'||!text.trim()) return bad;
+  if(text.length>FILE_MAX) return {ok:false,msg:'ファイルが大きすぎます（2MB まで）。今の中身はそのままです。'};
+  let o; try{ o=JSON.parse(text.replace(/^\uFEFF/,'')); }catch(e){ return bad; }
+  if(!o||typeof o!=='object'||Array.isArray(o)||o.app!==FILE_APP) return bad;
+  const d=o.data;
+  if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.staff)) return bad;
+  return {ok:true,state:sanitize(d)};
+}
+function applyImport(text){
+  const p=parseImport(text);
+  if(!p.ok){ alert(p.msg); return false; }
+  const nm=Object.keys(p.state.history).length;
+  if(!confirm(`今の中身は置きかわります（職員・設定・保存した月）。\n\nファイルの中身：職員 ${p.state.staff.length}人・保存した月 ${nm}か月\n\n開いてよいですか？`)) return false;
+  state=p.state; viewKey=null;
+  $('staffChanged').style.display='none'; $('histMsg').style.display='none';
+  save(); renderSettings(); renderStaff(); renderResult();
+  alert('ファイルを開きました。');
+  return true;
+}
+function importFile(f){
+  if(!f) return;
+  if(f.size>FILE_MAX){ alert('ファイルが大きすぎます（2MB まで）。今の中身はそのままです。'); return; }
+  f.text().then(applyImport,()=>alert('ファイルを読めませんでした。今の中身はそのままです。'));
 }
 
 const SAMPLE1={units:1,needE:1,needD:1,needL:1,staff:[
@@ -595,16 +748,17 @@ const SAMPLE2={units:2,needE:2,needD:1,needL:2,staff:[
 function loadSample(sm){
   if(state.staff.length && !confirm('今の職員の一覧を、見本に置きかえますか？')) return;
   Object.assign(state,{units:sm.units,needE:sm.needE,needD:sm.needD,needL:sm.needL});
-  state.staff=sm.staff.map(newStaff); state.result=null; $('staffChanged').style.display='none';
+  state.staff=sm.staff.map(newStaff); state.result=null; viewKey=null; $('staffChanged').style.display='none';
   save(); renderSettings(); renderStaff(); renderResult();
 }
 
 $('addStaff').addEventListener('click',()=>{state.staff.push(newStaff());staffChanged();});
 $('sample').addEventListener('click',()=>loadSample(SAMPLE1));
 $('sample2').addEventListener('click',()=>loadSample(SAMPLE2));
-$('clearAll').addEventListener('click',()=>{ if(!confirm('入れた職員と勤務表を、すべて消しますか？（もとに戻せません）')) return; state=defaultState(); try{localStorage.removeItem(STORE);}catch(e){} $('staffChanged').style.display='none'; saveWarned=false; document.querySelectorAll('footer p.warn').forEach(e=>e.remove()); renderSettings(); renderStaff(); renderResult(); });
+$('clearAll').addEventListener('click',()=>{ if(!confirm('入れた職員と勤務表（保存した月もふくむ）を、すべて消しますか？（もとに戻せません）')) return; state=defaultState(); viewKey=null; $('histMsg').style.display='none'; try{localStorage.removeItem(STORE);}catch(e){} $('staffChanged').style.display='none'; saveWarned=false; document.querySelectorAll('footer p.warn').forEach(e=>e.remove()); renderSettings(); renderStaff(); renderResult(); });
 // 年・月・ユニット数を変えて今の勤務表と合わなくなるときは、先に確かめる
 function settingChange(k){
+  viewKey=null;
   if(['year','month','units'].includes(k) && resultOk()){
     const nv={year:num($('year').value,2000,2100,state.year),month:num($('month').value,1,12,state.month),units:num($('units').value,1,3,1)};
     if(nv[k]!==state[k]){
@@ -619,6 +773,10 @@ $('make').addEventListener('click',run);
 $('csv').addEventListener('click',toCSV);
 $('print').addEventListener('click',()=>window.print());
 $('nextMonth').addEventListener('click',nextMonth);
+$('histSel').addEventListener('change',()=>showMonth($('histSel').value));
+$('exportJson').addEventListener('click',exportJSON);
+$('importJson').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',()=>{ const el=$('importFile'); const f=el.files&&el.files[0]; el.value=''; importFile(f); });
 renderSettings(); renderStaff(); renderResult();
 </script>
 </body>
