@@ -414,7 +414,7 @@ function parseWish(str,nd){
   return {set,bad};
 }
 function parseDaysFull(str){
-  let t=String(str||'').replace(/\s|曜日|曜|、|，|,|・/g,'').replace(/毎日|全日|全部/g,WEEK).replace(/平日/g,'月火水木金').replace(/[〜～~ー－–—]/g,'-');
+  let t=String(str||'').replace(/[毎全](?=[\s、，,・]*[月火水木金土日][\s、，,・]*曜)/g,'').replace(/\s|曜日|曜|、|，|,|・/g,'').replace(/毎日|全日|全部/g,WEEK).replace(/平日/g,'月火水木金').replace(/[〜～~ー－–—\u2212\u2010\u2011\u2015]|から/g,'-');
   const set=new Set(); let bad=false;
   t=t.replace(/([月火水木金土日])-([月火水木金土日])/g,(m,a,b)=>{ let i=WEEK.indexOf(a); const j=WEEK.indexOf(b); for(let k=0;k<7;k++){ set.add(WEEK[i]); if(i===j) break; i=(i+1)%7; } return ''; });
   t.split('').forEach(c=>{ if(WEEK.includes(c)) set.add(c); else bad=true; });
@@ -527,6 +527,7 @@ function evaluate(cfg,staff,res){
   }
   const nightShort=Array.from({length:cfg.units+1},()=>[]);
   const nightShortAt=warns.length;
+  const dayWarns=[]; // 日ごとの注意。41件以上でも人ごとの注意が隠れないよう、人ごとの注意の後に出す
   const dayCnt=[];
   for(let d=0;d<nd;d++){
     const c={早:0,日:0,遅:0,夜:0,cert:0,newbieNight:0,perU:Array(cfg.units+1).fill(0)};
@@ -536,11 +537,11 @@ function evaluate(cfg,staff,res){
     if(c.早<cfg.needE) lack.push('早番'+(cfg.needE-c.早)+'人');
     if(c.日<cfg.needD) lack.push('日勤'+(cfg.needD-c.日)+'人');
     if(c.遅<cfg.needL) lack.push('遅番'+(cfg.needL-c.遅)+'人');
-    if(lack.length){ pen+=lack.length*1000; warns.push(`${d+1}日：${lack.join('・')} が足りません`); }
+    if(lack.length){ pen+=lack.length*1000; dayWarns.push(`${d+1}日：${lack.join('・')} が足りません`); }
     for(let u=1;u<=cfg.units;u++) if(c.perU[u]<1){ pen+=1000; nightShort[u].push(d+1); }
-    for(let u=1;u<=cfg.units;u++) if(c.perU[u]>1){ pen+=300; warns.push(`${d+1}日：${cfg.units>1?'ユニット'+u+'の':''}夜勤が ${c.perU[u]}人です`); }
-    if(cfg.ruleNewbie && c.newbieNight>0){ pen+=800; warns.push(`${d+1}日：新人が夜勤に入っています`); }
-    if(cfg.ruleCert && (c.早+c.日+c.遅)>0 && c.cert===0){ pen+=300; warns.push(`${d+1}日：日中に介護福祉士・看護師がいません（事業所の決まり）`); }
+    for(let u=1;u<=cfg.units;u++) if(c.perU[u]>1){ pen+=300; dayWarns.push(`${d+1}日：${cfg.units>1?'ユニット'+u+'の':''}夜勤が ${c.perU[u]}人です`); }
+    if(cfg.ruleNewbie && c.newbieNight>0){ pen+=800; dayWarns.push(`${d+1}日：新人が夜勤に入っています`); }
+    if(cfg.ruleCert && (c.早+c.日+c.遅)>0 && c.cert===0){ pen+=300; dayWarns.push(`${d+1}日：日中に介護福祉士・看護師がいません（事業所の決まり）`); }
   }
   // 夜勤の不足はユニットごとに1行にまとめ、日ごとの注意より前に出す
   const nsLines=[]; for(let u=1;u<=cfg.units;u++) if(nightShort[u].length) nsLines.push(`${cfg.units>1?'ユニット'+u+'の':''}夜勤が足りない日：${nightShort[u].join(',')}日`);
@@ -565,6 +566,8 @@ function evaluate(cfg,staff,res){
     if(s._wishBad.length) warns.push(`${nm}：希望休の「${s._wishBad.join('、')}」が読めませんでした（例：3,10,20-22）`);
     if(s._prev.bad) warns.push(`${nm}：「前月の終わり」に、早日遅夜明休有研 以外の字があります`);
     if(s.type==='パート' && (s._days.size===0||s._daysBad)) warns.push(`${nm}：「入れる曜日」に読めない所があります（例：月水金・月〜金・平日・毎日）`);
+    // パートの「入れる曜日」の外の勤務（読めた曜日だけで点検。明は夜勤の次の日に自動で入るので数えない。休・希・有も数えない）
+    if(s.type==='パート' && s._days.size>0){ const outDays=[]; for(let d=0;d<nd;d++) if(['早','日','遅','夜','研'].includes(g[i][d]) && !s._days.has(cfg.wd(d))) outDays.push(`${d+1}日（${cfg.wd(d)}）`); if(outDays.length) warns.push(`${nm}：入れる曜日の外に勤務があります（${outDays.join('・')}）`); }
     if(s.nMin>s.nMax) warns.push(`${nm}：夜勤の最少 ${s.nMin}回が、最多 ${s.nMax}回より大きくなっています`);
     if(s.unit!=='共通' && +s.unit>cfg.units) warns.push(`${nm}：ユニット${s.unit} は、今のユニットの数（${cfg.units}）にありません`);
     if(p.maxRun>cfg.maxRun){pen+=500;warns.push(`${nm}：${p.maxRun}日続けて勤務になっています（上限 ${cfg.maxRun}日。前の月からの続きもふくむ）`);}
@@ -584,6 +587,7 @@ function evaluate(cfg,staff,res){
       }
     });
   });
+  warns.push(...dayWarns);
   const np=staff.map((s,i)=>(s.night&&!(cfg.ruleNewbie&&s.newbie))?per[i].night-s.nMin:null).filter(v=>v!==null);
   if(np.length>1) pen+=(Math.max(...np)-Math.min(...np))*40;
   return {pen,warns,infos,per,dayCnt};
@@ -693,7 +697,7 @@ function renderResult(){
   const r=v.r, cfg=makeCfg(r), staff=prepStaff(cfg,v.h), g=r.grid, res={g,nu:r.nu}, ev=evaluate(cfg,staff,res);
   $('out').style.display='';
   $('outTitle').textContent=`${r.year}年${r.month}月 勤務表`;
-  $('viewNote').textContent=v.ro?`保存した ${r.year}年${r.month}月 の表を見ています（見るだけで、直せません）。上の「保存した月」で「今の月」を選ぶと戻ります。注意と人数は、今の設定・資格・新人の印で数えます。`:'';
+  $('viewNote').textContent=v.ro?`保存した ${r.year}年${r.month}月 の表を見ています（見るだけで、直せません）。上の「保存した月」で「今の月」を選ぶと戻ります。注意と人数は、今の設定・入れる曜日・月の上限日数・資格・新人の印のほか、常勤/パート・ユニット・夜勤できるか・夜勤の最少と最多・公休数も、今の値で数えます。希望休・前月の終わり・ユニットの数は、その月の値です。`:'';
   $('viewNote').style.display=v.ro?'':'none';
   $('editNote').style.display=v.ro?'none':'';
   $('nextMonth').style.display=v.ro?'none':''; $('nextNote').style.display=v.ro?'none':'';
