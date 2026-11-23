@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>グループホームの勤務表を無料で自動作成｜夜勤・明け・希望休に対応</title>
-<meta name="description" content="グループホーム・小さな介護施設の1か月の勤務表を無料で自動作成。ユニットごとの夜勤、夜勤→明け→休みの並び、夜勤回数の公平さ、新人だけの夜勤を避ける、希望休、前の月からの続き、勤務時間の合計に対応。入力した名前や希望休はこのパソコンの中だけに保存し、外へ送りません（使われ方は Google アナリティクスで数えます）。">
+<meta name="description" content="2交代（16時間夜勤）のグループホーム向けに、1か月の勤務表を無料で自動作成。ユニットごとの夜勤、夜勤→明け→休みの並び、夜勤回数の公平さ、新人だけの夜勤を避ける、希望休、前の月からの続き、勤務時間の合計に対応。入力した名前や希望休はこのパソコンの中だけに保存し、外へ送りません（使われ方は Google アナリティクスで数えます）。">
 <!-- Google アナリティクスの測定 ID（GA_ID）とアンケートの URL（SURVEY_URL）は、下の JavaScript（script タグ）のいちばん上で入れます -->
 <style>
 :root{--bg:#f7f7f5;--card:#fff;--ink:#222;--sub:#666;--line:#ddd;--accent:#2b6cb0;--warn:#c53030;--ok:#2f855a;
@@ -263,6 +263,7 @@ function sanitize(s){
   out.maxRun=num(out.maxRun,2,10,5);
   out.ruleNewbie=typeof out.ruleNewbie==='boolean'?out.ruleNewbie:true; out.ruleCert=out.ruleCert===true;
   if(!resultShapeOk(out.result)) out.result=null;
+  else if(out.result.edited!==true) delete out.result.edited; // 手で直した印。古い保存・壊れた値は「手直しなし」
   out.history=sanitizeHistory(s.history);
   // workKey＝今作業している月（「次の月へ」で進んだ月・作った月のうち新しい方）。形がちがえば空に
   out.workKey=(typeof s.workKey==='string'&&/^\d{4}-\d{2}$/.test(s.workKey))?s.workKey:'';
@@ -275,8 +276,10 @@ function sanitize(s){
 const HIST_MAX=12;
 function ymKey(y,m){ return String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0'); }
 function histEntryFrom(r,staff){
-  return {grid:r.grid.map(row=>row.slice()),nu:r.nu.map(row=>row.slice()),units:r.units,
+  const e={grid:r.grid.map(row=>row.slice()),nu:r.nu.map(row=>row.slice()),units:r.units,
     names:staff.map(x=>String(x.name||'')),wish:staff.map(x=>String(x.wish||'')),prev:staff.map(x=>String(x.prev||''))};
+  if(r.edited===true) e.edited=true; // 手で直した印
+  return e;
 }
 function histEntryOk(key,h){
   const m=/^(\d{4})-(\d{2})$/.exec(key); if(!m) return false;
@@ -294,6 +297,7 @@ function sanitizeHistory(src){
     const h=src[k]; if(!histEntryOk(k,h)) return;
     const n=h.grid.length, strs=a=>Array.from({length:n},(_,i)=>Array.isArray(a)&&typeof a[i]==='string'?a[i]:'');
     out[k]={grid:h.grid.map(row=>row.slice()),nu:h.nu.map(row=>row.slice()),units:h.units,names:h.names.slice(),wish:strs(h.wish),prev:strs(h.prev)};
+    if(h.edited===true) out[k].edited=true;
   });
   pruneHistory(out);
   return out;
@@ -346,10 +350,30 @@ function readSettings(){
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+// 今の月の表に、手で直した所があるか
+function hasHandEdits(){ return resultOk()&&state.result.edited===true; }
+const EDIT_LOST='今の勤務表が消えます。手で直した所も消えます。'; // ファイルを開くとき
+const EDIT_VIEW_ONLY='今の勤務表はこの画面で直せなくなります。手で直した所は「保存した月」に見るだけの形で残ります（新しい12か月まで）。'; // 年・月、ユニットの数、職員のユニット
+const EDIT_GONE='今の勤務表はこの画面で直せなくなります。職員が変わると、「保存した月」でも見られなくなります。残したいときは、先に「ファイルに保存」を押してください。'; // 見本を入れる、最後の1人を消す
 function staffChanged(){
   viewKey=null;
   if(state.result){ state.result=null; $('staffChanged').textContent='職員の一覧が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; }
   save(); renderStaff(); renderResult();
+}
+// 職員を足す：今の表は消さず、新しい人の行（全日「休」）だけを足す
+function addStaffRow(){
+  if(!resultOk()){ state.staff.push(newStaff()); staffChanged(); return; }
+  const r=state.result, nd=new Date(state.year,state.month,0).getDate();
+  viewKey=null; state.staff.push(newStaff()); r.grid.push(Array(nd).fill('休')); r.nu.push(Array(nd).fill(0));
+  $('staffChanged').style.display='none'; save(); renderStaff(); renderResult();
+}
+// 職員を消す：その人の行だけを消す（ほかの人のマスはずらさない）。最後の1人なら表もなくなる
+function removeStaffAt(i){
+  const keep=resultOk()&&state.staff.length>1;
+  state.staff.splice(i,1);
+  if(!keep){ staffChanged(); return; }
+  viewKey=null; state.result.grid.splice(i,1); state.result.nu.splice(i,1);
+  $('staffChanged').style.display='none'; save(); renderStaff(); renderResult();
 }
 function opt(v,cur){return `<option${String(v)===String(cur)?' selected':''}>${v}</option>`;}
 function renderStaff(){
@@ -375,6 +399,7 @@ function renderStaff(){
     tr.querySelectorAll('[data-k]').forEach(el=>{
       el.addEventListener('change',()=>{
         const k=el.dataset.k;
+        if(k==='unit' && String(el.value)!==String(s.unit) && hasHandEdits() && state.result.grid[i].includes('夜') && !confirm('ユニットを変えると、'+EDIT_VIEW_ONLY+'よろしいですか？')){ el.value=s.unit; return; }
         if(el.type==='checkbox') s[k]=el.checked;
         else if(el.type==='number'){ const hi={nMin:15,nMax:15,off:20,cap:31}[k]||31; s[k]=String(el.value).trim()===''?s[k]:num(el.value,0,hi,s[k]); el.value=s[k]; }
         else s[k]=el.value;
@@ -382,12 +407,12 @@ function renderStaff(){
         if(k==='newbie' && s.newbie){ s.nMin=0; }
         save();
         if(k==='type'||k==='newbie') renderStaff(); else markBad(tr,s);
-        if(k==='unit'&&state.result){ state.result=null; $('staffChanged').textContent='職員のユニットが変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; save(); }
+        if(k==='unit'&&state.result&&(!resultOk()||state.result.grid[i].includes('夜'))){ state.result=null; $('staffChanged').textContent='職員のユニットが変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display=''; save(); }
         renderResult();
       });
     });
     markBad(tr,s);
-    tr.querySelector('[data-del]').addEventListener('click',()=>{ if(confirm((s.name||'この職員')+' を消しますか？')){state.staff.splice(i,1);staffChanged();} });
+    tr.querySelector('[data-del]').addEventListener('click',()=>{ if(confirm((s.name||'この職員')+' を消しますか？'+(state.staff.length===1&&hasHandEdits()?'\n\n'+EDIT_GONE:''))) removeStaffAt(i); });
     tb.appendChild(tr);
   });
 }
@@ -568,6 +593,8 @@ function evaluate(cfg,staff,res){
     if(s.type==='パート' && (s._days.size===0||s._daysBad)) warns.push(`${nm}：「入れる曜日」に読めない所があります（例：月水金・月〜金・平日・毎日）`);
     // パートの「入れる曜日」の外の勤務（読めた曜日だけで点検。明は夜勤の次の日に自動で入るので数えない。休・希・有も数えない）
     if(s.type==='パート' && s._days.size>0){ const outDays=[]; for(let d=0;d<nd;d++) if(['早','日','遅','夜','研'].includes(g[i][d]) && !s._days.has(cfg.wd(d))) outDays.push(`${d+1}日（${cfg.wd(d)}）`); if(outDays.length) warns.push(`${nm}：入れる曜日の外に勤務があります（${outDays.join('・')}）`); }
+    // 前の日に夜勤がない「明」（1日は、前の月の最後が「夜」なら正しい）
+    { const noNight=[]; for(let d=0;d<nd;d++) if(g[i][d]==='明' && !(d===0?s._prev.lastNight:g[i][d-1]==='夜')) noNight.push(`${d+1}日`); if(noNight.length) warns.push(`${nm}：夜勤のない明けがあります（${noNight.join('・')}）`); }
     if(s.nMin>s.nMax) warns.push(`${nm}：夜勤の最少 ${s.nMin}回が、最多 ${s.nMax}回より大きくなっています`);
     if(s.unit!=='共通' && +s.unit>cfg.units) warns.push(`${nm}：ユニット${s.unit} は、今のユニットの数（${cfg.units}）にありません`);
     if(p.maxRun>cfg.maxRun){pen+=500;warns.push(`${nm}：${p.maxRun}日続けて勤務になっています（上限 ${cfg.maxRun}日。前の月からの続きもふくむ）`);}
@@ -608,7 +635,12 @@ function run(){
   fixWorkKey();
   // 保存した月のうち、いちばん新しい月より前の月を作り直すときだけ、置きかえる前に確かめる。取り消したら何もしない
   // （今作業している月＝いちばん新しい月で、職員やユニットを変えて作り直すときは聞かない）
-  if(isPastSaved(state.year,state.month)&&!resultOk()&&!confirm(`保存した${state.year}年${state.month}月の表を作り直して置きかえます。前月の終わりの欄も、その月の前の月に合っているか確かめてください。よろしいですか？`)) return;
+  // 手で直した所があるときは、作り直す前に確かめる（今の表、または表が消えているときはその月の保存を見る）
+  const savedMonth=state.history&&state.history[ymKey(state.year,state.month)];
+  const hasEdits=resultOk()?state.result.edited===true:!!(savedMonth&&savedMonth.edited===true);
+  if(isPastSaved(state.year,state.month)&&!resultOk()){
+    if(!confirm(`保存した${state.year}年${state.month}月の表を作り直して置きかえます。${hasEdits?'手で直した所も作り直されます。':''}前月の終わりの欄も、その月の前の月に合っているか確かめてください。よろしいですか？`)) return;
+  } else if(hasEdits&&!confirm(viewKey?`${state.year}年${state.month}月の表の、手で直した所も作り直されます。よろしいですか？`:'手で直した所も作り直されます。よろしいですか？')) return;
   viewKey=null; save();
   const cfg=makeCfg(), staff=prepStaff(cfg);
   const base=(Date.now()^Math.floor(Math.random()*1e9))>>>0;
@@ -653,6 +685,7 @@ function resultOk(){
 // （「共通」なら 夜(U1)→夜(U2)→明。1ユニット・共通でない人は 夜→明）
 function cycleCell(cfg,staff,r,i,d){
   const g=r.grid, us=staff[i]._units, x=g[i][d];
+  r.edited=true; // 手で直した印
   if(x==='夜'){
     const k=us.indexOf(nightUnit(cfg,staff,{g,nu:r.nu},i,d));
     if(k>=0 && k<us.length-1){ r.nu[i][d]=us[k+1]; return; } // 記号は変えず、ユニットだけ次へ
@@ -683,7 +716,7 @@ function showMonth(key){
   const h=key&&state.history?state.history[key]:null;
   if(!key||!h){ viewKey=null; renderResult(); return !key; }
   if(!histMatches(h)){
-    viewKey=null; $('histMsg').textContent='職員が変わったので表示できません（その月の職員の人数・並び・名前が、今の職員の一覧とちがいます）。元の名前にもどすと見られます。'; $('histMsg').style.display='';
+    viewKey=null; $('histMsg').textContent='職員が変わったので表示できません（その月の職員の人数・並び・名前が、今の職員の一覧とちがいます）。職員の一覧（人数・並び・名前）を元にもどすと見られます。'; $('histMsg').style.display='';
     renderResult(); return false;
   }
   viewKey=(key===ymKey(state.year,state.month)&&resultOk())?null:key;
@@ -917,7 +950,7 @@ function applyImport(text){
   const p=parseImport(text);
   if(!p.ok){ alert(p.msg); return false; }
   const nm=Object.keys(p.state.history).length;
-  if(!confirm(`今の中身は置きかわります（職員・設定・保存した月）。\n\nファイルの中身：職員 ${p.state.staff.length}人・保存した月 ${nm}か月\n\n開いてよいですか？`)) return false;
+  if(!confirm(`今の中身は置きかわります（職員・設定・保存した月）。\n\nファイルの中身：職員 ${p.state.staff.length}人・保存した月 ${nm}か月\n\n${hasHandEdits()?EDIT_LOST+'\n\n':''}開いてよいですか？`)) return false;
   state=p.state; viewKey=null;
   $('staffChanged').style.display='none'; $('histMsg').style.display='none';
   save(); renderSettings(); renderStaff(); renderResult();
@@ -957,26 +990,26 @@ const SAMPLE2={units:2,needE:2,needD:1,needL:2,staff:[
  {name:'久保',type:'パート',unit:'共通',cert:'介護福祉士',night:false,nMin:0,nMax:0,days:'土日月',cap:12},
 ]};
 function loadSample(sm){
-  if(state.staff.length && !confirm('今の職員の一覧を、見本に置きかえますか？')) return;
+  if(state.staff.length && !confirm('今の職員の一覧を、見本に置きかえますか？'+(hasHandEdits()?'\n\n'+EDIT_GONE:''))) return;
   Object.assign(state,{units:sm.units,needE:sm.needE,needD:sm.needD,needL:sm.needL});
   state.staff=sm.staff.map(newStaff); state.result=null; viewKey=null; $('staffChanged').style.display='none';
   save(); renderSettings(); renderStaff(); renderResult();
 }
 
-$('addStaff').addEventListener('click',()=>{state.staff.push(newStaff());staffChanged();});
+$('addStaff').addEventListener('click',addStaffRow);
 $('sample').addEventListener('click',()=>loadSample(SAMPLE1));
 $('sample2').addEventListener('click',()=>loadSample(SAMPLE2));
 $('clearAll').addEventListener('click',()=>{ if(!confirm('入れた職員と勤務表（保存した月もふくむ）を、すべて消しますか？（もとに戻せません）')) return; state=defaultState(); viewKey=null; $('histMsg').style.display='none'; try{localStorage.removeItem(STORE);}catch(e){} $('staffChanged').style.display='none'; saveWarned=false; document.querySelectorAll('footer p.warn').forEach(e=>e.remove()); renderSettings(); renderStaff(); renderResult(); });
 // 年・月・ユニット数を変えて今の勤務表と合わなくなるときは、先に確かめる
 function settingChange(k){
-  viewKey=null;
   if(['year','month','units'].includes(k) && resultOk()){
     const nv={year:num($('year').value,2000,2100,state.year),month:num($('month').value,1,12,state.month),units:num($('units').value,1,3,1)};
     if(nv[k]!==state[k]){
-      if(!confirm('勤務表は作り直しになります。よろしいですか？')){ renderSettings(); return; }
+      if(!confirm(hasHandEdits()?(k==='units'?'ユニットの数':'年・月')+'を変えると、'+EDIT_VIEW_ONLY+'よろしいですか？':'勤務表は作り直しになります。よろしいですか？')){ renderSettings(); return; }
       state.result=null; $('staffChanged').textContent='年・月・ユニットの数が変わったので、勤務表を消しました。もう一度「勤務表を自動で作る」を押してください。'; $('staffChanged').style.display='';
     }
   }
+  viewKey=null;
   readSettings(); fixWorkKey(); save(); if(k==='units') renderStaff(); renderResult();
 }
 SETKEYS.concat(['ruleNewbie','ruleCert']).forEach(k=>$(k).addEventListener('change',()=>settingChange(k)));
